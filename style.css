@@ -66,8 +66,11 @@ body {
 .header-spacer { flex: 1; }
 .theme-indicator {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;   
+  align-items: center;      
+  gap: 1px;
+  position: relative;
+  top: 8px; 
   font-size: 11px;
   color: var(--t3);
   font-weight: 600;
