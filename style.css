@@ -91,15 +91,15 @@ body {
 }
 .brand-wrap:active { opacity: 0.7; }
 .brand-name {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 400;
   letter-spacing: -0.3px;
   color: var(--t1);
 }
 .brand-name strong { font-weight: 800; }
 .brand-nl {
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 1000;
   background: var(--green);
   color: #000;
   padding: 4px 6px;
