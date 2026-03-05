@@ -775,7 +775,7 @@ body {
 .kt-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
 .kt-meta { font-size: 14px; color: var(--t3); margin-bottom: 8px; }
 .kt-text { font-size: 15px; color: var(--t2); line-height: 1.5; }
-.kt-text h2 {color: #000; font-size: 18px;}
+.kt-text h2 {color: #30af4c; font-size: 18px;}
 .kt-empty { text-align: center; padding: 40px 20px; }
 .kt-empty-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; color: var(--t1); }
 .kt-empty-sub { font-size: 14px; color: var(--t3); }
