@@ -1189,7 +1189,15 @@ function fetchKijktip(){
   if(kijktipCache)return Promise.resolve(kijktipCache);
   if(!GOOGLE_SHEET_KIJKTIP_URL)return Promise.resolve(null);
   return fetch(GOOGLE_SHEET_KIJKTIP_URL).then(function(r){return r.text();}).then(function(csv){
-    var lines=csv.split('\n');if(lines.length<2)return null;
+    var lines=[];var cur='',inQ=false;
+for(var c=0;c<csv.length;c++){
+  var ch=csv[c];
+  if(ch==='"')inQ=!inQ;
+  else if((ch==='\n'||ch==='\r')&&!inQ){if(cur.trim())lines.push(cur);cur='';continue;}
+  cur+=ch;
+}
+if(cur.trim())lines.push(cur);
+if(lines.length<2)return null;
     var hdr=lines[0].split(',').map(function(h){return h.trim().toLowerCase().replace(/['"]/g,'');});
     var ci={titel:hdr.indexOf('titel'),tmdb_id:hdr.indexOf('tmdb_id'),type:hdr.indexOf('type'),tekst:hdr.indexOf('tekst'),datum:hdr.indexOf('datum')};
     var best=null;
