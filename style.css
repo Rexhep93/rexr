@@ -593,7 +593,7 @@ body {
   margin-left: 6px;
   vertical-align: middle;
 }
-.t10-score { font-size: 14px; font-weight: 700; color: var(--green); flex-shrink: 0; }
+.t10-score { font-size: 14px; font-weight: 700; color: #FFC107; flex-shrink: 0; }
 .t10-badge { font-size: 11px; padding: 2px 7px; border-radius: var(--radius); background: var(--brd2); border: 1px solid var(--brd); color: var(--t3); margin-left: 6px; }
 .t10-loading { font-size: 15px; color: var(--t3); padding: 28px 0; text-align: center; }
 .t10-updated { font-size: 12px; color: var(--t3); text-align: right; margin-top: 12px; }
