@@ -4,7 +4,7 @@
 
 var GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSoYyeD3v2ElTcXt5I9IlPOHYBc8GwpRW_N06WFtgjUd20dIKEcEte7Vcdfik_kvfbDgs4xoS5wJU-c/pub?gid=0&single=true&output=csv';
 var GOOGLE_SHEET_SPORT_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSoYyeD3v2ElTcXt5I9IlPOHYBc8GwpRW_N06WFtgjUd20dIKEcEte7Vcdfik_kvfbDgs4xoS5wJU-c/pub?gid=1914313955&single=true&output=csv';
-var GOOGLE_SHEET_KIJKTIP_URL = ''; /* Set gid when kijktip tab is created */
+var GOOGLE_SHEET_KIJKTIP_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSoYyeD3v2ElTcXt5I9IlPOHYBc8GwpRW_N06WFtgjUd20dIKEcEte7Vcdfik_kvfbDgs4xoS5wJU-c/pub?gid=581385634&single=true&output=csv';
 
 var WM_KEY     = 'eLLuTN9mYhAAWBNl1P3XOGgRKFA1toAVWhOiYX3m';
 var WM_BASE    = 'https://api.watchmode.com/v1';
