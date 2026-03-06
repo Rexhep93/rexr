@@ -905,7 +905,7 @@ function renderMyList(){
   var sec=document.createElement('section');sec.className='settings-section';
   var html='<div class="set-title">Mijn lijst</div>';
   if(!myList.length){
-    html+='<div class="kt-empty" style="padding:40px 20px"><div class="kt-empty-title">Lijst is leeg</div><div class="kt-empty-sub">Voeg films, series en live events toe via het + knopje in de detail-sheet.</div></div>';
+    html+='<div class="kt-empty" style="padding:40px 20px"><div class="kt-empty-title">Lijst is leeg</div><div class="kt-empty-sub">Voeg toe via het + knopje bij de film, serie of live event.</div></div>';
   }else{
     html+='<div class="fav-list">'+myList.map(function(f){
       var poster=f.img||'';var tl=f._type==='movie'?'Film':f._type==='live'?'Live':'Serie';
