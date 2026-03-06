@@ -67,6 +67,7 @@ body {
   z-index: 15;
 }
 .header-row {
+  padding-top: 4px;
   display: flex;
   align-items: center;
 }
