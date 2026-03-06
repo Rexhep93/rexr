@@ -1352,8 +1352,8 @@ function renderSettings(){
   '<div class="set-row set-link" id="setMyListLink"><span>Mijn lijst</span><span class="set-cnt">('+myList.length+')</span><span class="set-arrow">&rsaquo;</span></div>'+
   '<div class="set-row"><span>Posterweergave</span><div class="set-toggle-group" id="posterToggle"><button class="set-tog'+(pSize==='compact'?' active':'')+'" data-v="compact">Compact</button><button class="set-tog'+(pSize==='large'?' active':'')+'" data-v="large">Groot</button></div></div></div>'+
   '<div class="set-group"><div class="set-group-title">Meldingen</div>'+
-  '<div class="set-row"><span>Nieuwe releases</span><label class="set-switch"><input type="checkbox" id="notifRel"'+(notifRel?' checked':'')+'><span class="set-slider"></span></label></div>'+
-  '<div class="set-row"><span>Favoriet toegevoegd</span><label class="set-switch"><input type="checkbox" id="notifFav"'+(notifFav?' checked':'')+'><span class="set-slider"></span></label></div></div>'+
+  '<div class="set-row"><span>Meldingen voor nieuwe releases in volgend</span><label class="set-switch"><input type="checkbox" id="notifRel"'+(notifRel?' checked':'')+'><span class="set-slider"></span></label></div>'+
+  '<div class="set-row"><span>Herinner mij aan mijn lijst</span><label class="set-switch"><input type="checkbox" id="notifFav"'+(notifFav?' checked':'')+'><span class="set-slider"></span></label></div></div>'+
   '<div class="set-group"><div class="set-group-title">Juridisch</div>'+
   '<div class="set-row set-link" data-page="privacy"><span>Privacybeleid</span><span class="set-arrow">&rsaquo;</span></div>'+
   '<div class="set-row set-link" data-page="terms"><span>Algemene voorwaarden</span><span class="set-arrow">&rsaquo;</span></div>'+
