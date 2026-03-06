@@ -82,7 +82,7 @@ body {
 }
 .brand-wrap:active { opacity: 0.7; }
 .brand-icon {
-  width: 22px; height: 22px;
+  width: 25px; height: 25px;
   border-radius: 8px;
   background: var(--green);
   display: flex;
@@ -92,7 +92,7 @@ body {
   padding: 4px;
 }
 .brand-name {
-  font-size: 19px;
+  font-size: 23px;
   letter-spacing: -0.3px;
   color: var(--t1);
   white-space: nowrap;
