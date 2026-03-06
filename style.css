@@ -70,7 +70,7 @@ body {
 .header-search-wrap {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: right;
 }
 .header-search-btn {
   display: flex;
@@ -95,18 +95,15 @@ body {
 }
 .brand-wrap:active { opacity: 0.7; }
 .brand-name {
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 24px;
+  font-weight: 700;
   letter-spacing: -0.3px;
   color: var(--t1);
 }
 .brand-name strong { font-weight: 800; }
 .brand-gids {
-  background: var(--green);
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 5px;
-  font-weight: 700;
+  color: var(--t1);
+  font-weight: 400;
   letter-spacing: -0.3px;
 }
 .header-icon-btn {
