@@ -1022,7 +1022,7 @@ function fetchTop10(p,c){
 }
 function renderTop10(){
   var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='top10-section';
-  sec.innerHTML='<div class="top10-title">Top 10 trending deze week</div><div class="top10-sub">Meest bekeken op streaming in NL</div><div class="t10-tabs" id="t10tabs"></div><div id="t10list" class="t10-list"><div class="t10-loading"><div class="ld-spinner" style="margin:0 auto 8px"></div>Laden...</div></div>';
+  sec.innerHTML='<div class="top10-title">Top 10 trending deze week</div><div class="top10-sub">Meest bekeken op streaming in Nederland</div><div class="t10-tabs" id="t10tabs"></div><div id="t10list" class="t10-list"><div class="t10-loading"><div class="ld-spinner" style="margin:0 auto 8px"></div>Laden...</div></div>';
   main.appendChild(sec);renderT10Tabs();
   fetchTop10(top10Period,top10Category).then(function(items){
     var el=document.getElementById('t10list');if(!el)return;if(!items.length){el.innerHTML='<div class="t10-loading">Geen data.</div>';return;}
