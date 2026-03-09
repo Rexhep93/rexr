@@ -84,10 +84,10 @@ body {
   height: 28px;
 }
 .brand-slogan {
-  font-family: 'DM Sans', var(--font);
-  font-size: 10.5px;
+  font-family: var(--font);
+  font-size: 9.5px;
   font-weight: 400;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: var(--t3);
   white-space: nowrap;
   overflow: hidden;
