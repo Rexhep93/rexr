@@ -12,8 +12,8 @@ function drawHeaderLogo(){
   var ctx=canvas.getContext('2d');
   var dpr=window.devicePixelRatio||2;
   var fontSize=24;
-  var streamFont='700 '+fontSize+'px "DM Sans",sans-serif';
-  var gidsFont='800 '+fontSize+'px "DM Sans",sans-serif';
+  var streamFont = '700 '+fontSize+'px "Jost", sans-serif';
+  var gidsFont = '800 '+fontSize+'px "Jost", sans-serif';
 
   /* Measure text widths */
   ctx.font=streamFont;
@@ -86,7 +86,7 @@ function drawHeaderLogo(){
   ctx.beginPath();ctx.arc(bx+bw-2.8*s,by+9.5*s,0.9*s,0,Math.PI*2);ctx.fill();
   ctx.globalAlpha=1;
 
-  /* "DS" */
+  /* "ds" */
   ctx.font=gidsFont;
   ctx.fillStyle=gidsColor;
   ctx.fillText('ds',streamW+giW,baseline);
