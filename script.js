@@ -36,8 +36,8 @@ function drawHeaderLogo(){
   const dpr=window.devicePixelRatio||2;
   const fontSize=24;
 
-  const streamFont='800 '+fontSize+'px "Jost", sans-serif';
-  const gidsFont='800 '+fontSize+'px "Jost", sans-serif';
+  const streamFont='700 '+fontSize+'px "Jost", sans-serif';
+  const gidsFont='700 '+fontSize+'px "Jost", sans-serif';
 
   ctx.font=streamFont;
   const streamW=ctx.measureText('Stream').width;
