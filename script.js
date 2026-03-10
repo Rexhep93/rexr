@@ -84,7 +84,7 @@ function drawHeaderLogo(){
 
   /* RETRO TV ALS PUNT */
   const tvCX=iX+iW/2;
-  const dotY=baseline-fontSize*0.9;
+  const dotY=baseline-fontSize*0.82;
 
   const s=fontSize*0.017;
 
