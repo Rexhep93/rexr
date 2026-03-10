@@ -24,32 +24,127 @@ function updateMetaThemeColor(){
 
 /* ── Brand Logo (canvas) ── */
 function drawHeaderLogo(){
-  var canvas=document.getElementById('headerLogo');
+  const canvas=document.getElementById('headerLogo');
   if(!canvas)return;
-  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  var streamColor=isDark?'#f0f4f8':'#1a202c';
-  var gidsColor=isDark?'#3bc45a':'#30af4c';
-  var ctx=canvas.getContext('2d');
-  var dpr=window.devicePixelRatio||2;
-  var fontSize=24;
-  var streamFont='800 '+fontSize+'px "Jost", sans-serif';
-  var gidsFont='800 '+fontSize+'px "Jost", sans-serif';
-  ctx.font=streamFont;var streamW=ctx.measureText('Stream').width;
-  ctx.font=gidsFont;var gW=ctx.measureText('g').width;var giW=ctx.measureText('gi').width;var iW=giW-gW;var gidsW=ctx.measureText('gids').width;var totalW=streamW+gidsW+6;
-  var h=fontSize*1.55;canvas.style.width=totalW+'px';canvas.style.height=h+'px';canvas.width=Math.ceil(totalW*dpr);canvas.height=Math.ceil(h*dpr);ctx.scale(dpr,dpr);
-  var baseline=fontSize*1.15;
-  ctx.font=streamFont;ctx.fillStyle=streamColor;ctx.fillText('Stream',0,baseline);
-  ctx.font=gidsFont;ctx.fillStyle=gidsColor;ctx.fillText('g',streamW,baseline);
-  var iX=streamW+gW;ctx.save();ctx.beginPath();ctx.rect(iX-2,baseline-fontSize*0.62,iW+4,fontSize*0.72);ctx.clip();ctx.fillStyle=gidsColor;ctx.fillText('i',iX,baseline);ctx.restore();
-  var tvCX=iX+iW/2;var dotY=baseline-fontSize*0.9;var s=fontSize*0.0168;
-  ctx.strokeStyle=gidsColor;ctx.lineWidth=1.5*(s/0.72);ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(tvCX-4*s,dotY);ctx.lineTo(tvCX-9*s,dotY-8*s);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(tvCX+4*s,dotY);ctx.lineTo(tvCX+9*s,dotY-8*s);ctx.stroke();
-  var bw=19*s,bh=14*s,bx=tvCX-bw/2,by=dotY;ctx.fillStyle=gidsColor;ctx.beginPath();ctx.roundRect(bx,by,bw,bh,2.8*s);ctx.fill();
-  ctx.save();ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.roundRect(bx+1.8*s,by+2*s,12*s,10*s,1.8*s);ctx.fill();ctx.restore();
-  ctx.globalAlpha=0.5;ctx.fillStyle=gidsColor;ctx.beginPath();ctx.arc(bx+bw-2.8*s,by+4.5*s,1.2*s,0,Math.PI*2);ctx.fill();
-  ctx.globalAlpha=0.35;ctx.beginPath();ctx.arc(bx+bw-2.8*s,by+9.5*s,0.9*s,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-  ctx.font=gidsFont;ctx.fillStyle=gidsColor;ctx.fillText('ds',streamW+giW,baseline);
+
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const streamColor=isDark?'#f0f4f8':'#1a202c';
+  const gidsColor=isDark?'#3bc45a':'#30af4c';
+
+  const ctx=canvas.getContext('2d');
+
+  const dpr=window.devicePixelRatio||2;
+  const fontSize=24;
+
+  const streamFont='800 '+fontSize+'px "Jost", sans-serif';
+  const gidsFont='800 '+fontSize+'px "Jost", sans-serif';
+
+  ctx.font=streamFont;
+  const streamW=ctx.measureText('Stream').width;
+
+  ctx.font=gidsFont;
+  const gW=ctx.measureText('g').width;
+  const giW=ctx.measureText('gi').width;
+  const iW=giW-gW;
+  const gidsW=ctx.measureText('gids').width;
+
+  const spacing=6;
+  const totalW=streamW+gidsW+spacing;
+  const h=fontSize*1.55;
+
+  canvas.style.width=totalW+'px';
+  canvas.style.height=h+'px';
+
+  canvas.width=Math.ceil(totalW*dpr);
+  canvas.height=Math.ceil(h*dpr);
+
+  ctx.scale(dpr,dpr);
+
+  const baseline=fontSize*1.15;
+
+  /* STREAM */
+  ctx.font=streamFont;
+  ctx.fillStyle=streamColor;
+  ctx.fillText('Stream',0,baseline);
+
+  /* g */
+  ctx.font=gidsFont;
+  ctx.fillStyle=gidsColor;
+  ctx.fillText('g',streamW,baseline);
+
+  /* i zonder punt */
+  const iX=streamW+gW;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(iX-2,baseline-fontSize*0.52,iW+4,fontSize*0.52);
+  ctx.clip();
+  ctx.fillText('i',iX,baseline);
+  ctx.restore();
+
+  /* RETRO TV ALS PUNT */
+  const tvCX=iX+iW/2;
+  const dotY=baseline-fontSize*0.9;
+
+  const s=fontSize*0.017;
+
+  ctx.strokeStyle=gidsColor;
+  ctx.lineWidth=1.5*(s/0.72);
+  ctx.lineCap='round';
+
+  /* antennes */
+  ctx.beginPath();
+  ctx.moveTo(tvCX-4*s,dotY);
+  ctx.lineTo(tvCX-9*s,dotY-8*s);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(tvCX+4*s,dotY);
+  ctx.lineTo(tvCX+9*s,dotY-8*s);
+  ctx.stroke();
+
+  /* tv body */
+  const bw=19*s;
+  const bh=14*s;
+  const bx=tvCX-bw/2;
+  const by=dotY;
+
+  ctx.fillStyle=gidsColor;
+
+  ctx.beginPath();
+  ctx.roundRect(bx,by,bw,bh,2.8*s);
+  ctx.fill();
+
+  /* scherm uitsparing */
+  ctx.save();
+  ctx.globalCompositeOperation='destination-out';
+
+  ctx.beginPath();
+  ctx.roundRect(bx+1.8*s,by+2*s,12*s,10*s,1.8*s);
+  ctx.fill();
+
+  ctx.restore();
+
+  /* knopjes */
+  ctx.globalAlpha=0.5;
+
+  ctx.beginPath();
+  ctx.arc(bx+bw-2.8*s,by+4.5*s,1.2*s,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.globalAlpha=0.35;
+
+  ctx.beginPath();
+  ctx.arc(bx+bw-2.8*s,by+9.5*s,0.9*s,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.globalAlpha=1;
+
+  /* ds */
+  ctx.font=gidsFont;
+  ctx.fillStyle=gidsColor;
+  ctx.fillText('ds',streamW+giW,baseline);
+
   updateMetaThemeColor();
 }
 
