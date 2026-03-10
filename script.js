@@ -1,0 +1,678 @@
+/* ═══════════════════════════════════════════════════════════════
+   Streamgids — Enhanced Edition
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Haptic feedback helper ── */
+function haptic(style){
+  try{
+    if(window.navigator&&window.navigator.vibrate){
+      if(style==='light')window.navigator.vibrate(10);
+      else if(style==='medium')window.navigator.vibrate(20);
+      else if(style==='heavy')window.navigator.vibrate(30);
+      else window.navigator.vibrate(10);
+    }
+  }catch(e){}
+}
+
+/* ── Dynamic theme-color meta tag ── */
+function updateMetaThemeColor(){
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var meta=document.getElementById('metaThemeColor');
+  if(!meta){meta=document.querySelector('meta[name="theme-color"]');}
+  if(meta)meta.content=isDark?'#1a1a1a':'#f2f2f7';
+}
+
+/* ── Brand Logo (canvas) ── */
+function drawHeaderLogo(){
+  var canvas=document.getElementById('headerLogo');
+  if(!canvas)return;
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var streamColor=isDark?'#f0f4f8':'#1a202c';
+  var gidsColor=isDark?'#3bc45a':'#30af4c';
+  var ctx=canvas.getContext('2d');
+  var dpr=window.devicePixelRatio||2;
+  var fontSize=24;
+  var streamFont='700 '+fontSize+'px "Jost", sans-serif';
+  var gidsFont='800 '+fontSize+'px "Jost", sans-serif';
+  ctx.font=streamFont;var streamW=ctx.measureText('Stream').width;
+  ctx.font=gidsFont;var gW=ctx.measureText('g').width;var giW=ctx.measureText('gi').width;var iW=giW-gW;var gidsW=ctx.measureText('gids').width;var totalW=streamW+gidsW+6;
+  var h=fontSize*1.55;canvas.style.width=totalW+'px';canvas.style.height=h+'px';canvas.width=Math.ceil(totalW*dpr);canvas.height=Math.ceil(h*dpr);ctx.scale(dpr,dpr);
+  var baseline=fontSize*1.15;
+  ctx.font=streamFont;ctx.fillStyle=streamColor;ctx.fillText('Stream',0,baseline);
+  ctx.font=gidsFont;ctx.fillStyle=gidsColor;ctx.fillText('g',streamW,baseline);
+  var iX=streamW+gW;ctx.save();ctx.beginPath();ctx.rect(iX-2,baseline-fontSize*0.62,iW+4,fontSize*0.72);ctx.clip();ctx.fillStyle=gidsColor;ctx.fillText('i',iX,baseline);ctx.restore();
+  var tvCX=iX+iW/2;var dotY=baseline-fontSize*0.9;var s=fontSize*0.0168;
+  ctx.strokeStyle=gidsColor;ctx.lineWidth=1.5*(s/0.72);ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(tvCX-4*s,dotY);ctx.lineTo(tvCX-9*s,dotY-8*s);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(tvCX+4*s,dotY);ctx.lineTo(tvCX+9*s,dotY-8*s);ctx.stroke();
+  var bw=19*s,bh=14*s,bx=tvCX-bw/2,by=dotY;ctx.fillStyle=gidsColor;ctx.beginPath();ctx.roundRect(bx,by,bw,bh,2.8*s);ctx.fill();
+  ctx.save();ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.roundRect(bx+1.8*s,by+2*s,12*s,10*s,1.8*s);ctx.fill();ctx.restore();
+  ctx.globalAlpha=0.5;ctx.fillStyle=gidsColor;ctx.beginPath();ctx.arc(bx+bw-2.8*s,by+4.5*s,1.2*s,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=0.35;ctx.beginPath();ctx.arc(bx+bw-2.8*s,by+9.5*s,0.9*s,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.font=gidsFont;ctx.fillStyle=gidsColor;ctx.fillText('ds',streamW+giW,baseline);
+  updateMetaThemeColor();
+}
+
+var GOOGLE_SHEET_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSoYyeD3v2ElTcXt5I9IlPOHYBc8GwpRW_N06WFtgjUd20dIKEcEte7Vcdfik_kvfbDgs4xoS5wJU-c/pub?gid=0&single=true&output=csv';
+var GOOGLE_SHEET_SPORT_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSoYyeD3v2ElTcXt5I9IlPOHYBc8GwpRW_N06WFtgjUd20dIKEcEte7Vcdfik_kvfbDgs4xoS5wJU-c/pub?gid=1914313955&single=true&output=csv';
+var GOOGLE_SHEET_KIJKTIP_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSoYyeD3v2ElTcXt5I9IlPOHYBc8GwpRW_N06WFtgjUd20dIKEcEte7Vcdfik_kvfbDgs4xoS5wJU-c/pub?gid=581385634&single=true&output=csv';
+
+var WM_KEY='eLLuTN9mYhAAWBNl1P3XOGgRKFA1toAVWhOiYX3m';
+var WM_BASE='https://api.watchmode.com/v1';
+var TMDB_TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZWI4MDVlODg2MmYyODhkOTQ1NDhmOTU1NGYyZjc2YiIsIm5iZiI6MTY3OTQ3MzE2Ni43NzMsInN1YiI6IjY0MWFiYTBlZjlhYTQ3MDBiMTUxZGRmYSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.E73D999tD0DBX0aJVVfyooRa3T750C-Y_Hk1TZLr-EM';
+var TMDB_BASE='https://api.themoviedb.org/3';
+var TMDB_IMG='https://image.tmdb.org/t/p/w300';
+var OMDB_KEY='';
+
+var SPORT_LOGOS={'Eredivisie':'https://crests.football-data.org/ED.png','Champions League':'https://crests.football-data.org/CL.png','Premier League':'https://crests.football-data.org/PL.png','La Liga':'https://crests.football-data.org/PD.png','Bundesliga':'https://crests.football-data.org/BL1.png','Ligue 1':'https://crests.football-data.org/FL1.png','Formule 1':'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/120px-F1.svg.png','F1':'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/120px-F1.svg.png','WWE':'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/WWE_logo_2023.svg/120px-WWE_logo_2023.svg.png','UFC':'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/UFC_logo.svg/120px-UFC_logo.svg.png','MMA':'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/UFC_logo.svg/120px-UFC_logo.svg.png','NBA':'https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/105px-National_Basketball_Association_logo.svg.png','Basketbal':'https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/105px-National_Basketball_Association_logo.svg.png','Wrestling':'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/WWE_logo_2023.svg/120px-WWE_logo_2023.svg.png'};
+
+var WANTED_PROVIDERS=[
+  {match:'netflix',key:'netflix',name:'Netflix',color:'#E50914',text:'#fff'},
+  {match:'prime video',key:'prime video',name:'Prime Video',color:'#00A8E0',text:'#fff'},
+  {match:'amazon prime',key:'prime video',name:'Prime Video',color:'#00A8E0',text:'#fff'},
+  {match:'disney plus',key:'disney+',name:'Disney+',color:'#113CCF',text:'#fff'},
+  {match:'disney+',key:'disney+',name:'Disney+',color:'#113CCF',text:'#fff'},
+  {match:'apple tv plus',key:'apple tv+',name:'Apple TV+',color:'#555555',text:'#fff'},
+  {match:'apple tv+',key:'apple tv+',name:'Apple TV+',color:'#555555',text:'#fff'},
+  {match:'appletv+',key:'apple tv+',name:'Apple TV+',color:'#555555',text:'#fff'},
+  {match:'appletv',key:'apple tv+',name:'Apple TV+',color:'#555555',text:'#fff'},
+  {match:'apple tv',key:'apple tv+',name:'Apple TV+',color:'#555555',text:'#fff'},
+  {match:'max ',key:'max',name:'Max',color:'#5822B4',text:'#fff'},
+  {match:'hbo max',key:'max',name:'Max',color:'#5822B4',text:'#fff'},
+  {match:'skyshowtime',key:'skyshowtime',name:'SkyShowtime',color:'#003E7E',text:'#fff'},
+  {match:'videoland',key:'videoland',name:'Videoland',color:'#CC0000',text:'#fff'},
+  {match:'path',key:'pathe',name:'Pathe Thuis',color:'#FF6B00',text:'#fff'},
+  {match:'npo',key:'npo',name:'NPO Start',color:'#FF6600',text:'#fff'},
+  {match:'paramount',key:'paramount',name:'Paramount+',color:'#0064FF',text:'#fff'},
+  {match:'discovery',key:'discovery',name:'Discovery+',color:'#0036A0',text:'#fff'},
+  {match:'viaplay',key:'viaplay',name:'Viaplay',color:'#1F1646',text:'#fff'},
+  {match:'canal',key:'canal',name:'Canal+',color:'#000000',text:'#fff'},
+  {match:'mubi',key:'mubi',name:'MUBI',color:'#00B4B4',text:'#fff'},
+  {match:'cinemember',key:'cinemember',name:'CineMember',color:'#E8003D',text:'#fff'},
+  {match:'film1',key:'film1',name:'Film1',color:'#D10000',text:'#fff'}
+];
+var POPULAR_KEYS=['netflix','prime video','max','disney+','videoland','apple tv+','skyshowtime','viaplay','pathe','npo','paramount','discovery','mubi','cinemember','film1','canal'];
+var TMDB_NL_PROVIDERS={};
+
+function matchProvider(n){var l=(n||'').toLowerCase().replace(/[^a-z0-9\s]/g,'').trim();if(l==='netflix kids'||l==='netflix basic with ads'||l.indexOf('netflix kids')!==-1)l='netflix';return WANTED_PROVIDERS.find(function(p){return l.includes(p.match);});}
+function canonicalProviderName(n){var p=matchProvider(n);return p?p.name:((n||'').replace(/Netherlands/gi,'').trim());}
+function canonicalProviderLogo(key){var canonKey=(key||'').toLowerCase();var fallback=null;for(var pid in TMDB_NL_PROVIDERS){var pr=TMDB_NL_PROVIDERS[pid];if(!pr||!pr.name||!pr.logo||providerKey(pr.name)!==canonKey)continue;var raw=(pr.rawName||'').toLowerCase();if(raw.indexOf('kids')!==-1||raw.indexOf('basic')!==-1||raw.indexOf('ads')!==-1){if(!fallback)fallback=pr.logo;continue;}return pr.logo;}return fallback;}
+function getSvcStyle(n){var p=matchProvider(n);return p?{color:p.color,text:p.text}:{color:'#444',text:'#fff'};}
+function providerKey(n){var p=matchProvider(n);return p?p.key:(n||'').toLowerCase().replace(/netherlands/gi,'').replace(/\s+/g,' ').trim();}
+function capitalizeProvider(n){var p=matchProvider(n);if(p)return p.name;var s=(n||'').replace(/Netherlands/gi,'').trim();if(!s)return s;return s.charAt(0).toUpperCase()+s.slice(1);}
+function isNLStreaming(n){return !!matchProvider(n);}
+function detectOrigin(s){var n=(s||'').toLowerCase();return ['netflix','disney','max','hbo','videoland','apple','npo'].some(function(x){return n.includes(x)})?'original':'licensed';}
+function resolveType(t){if(!t)return null;var s=String(t).toLowerCase();if(s==='movie')return 'movie';if(s.startsWith('tv_')||s.includes('series')||s.includes('miniseries')||s.includes('special'))return 'tv';return null;}
+
+var allItems=[];var typeFilter='all';var svcFilter='all';var detailCache={};var imgCache={};
+var allDays=[];var selectedDate=null;var wmSources=[];var wmSourceMap={};var currentModalItem=null;var collapsedSections={};
+var activeTab='stream';
+var streamType='all';var streamSubFilter=null;
+var svcBarVisible=false;
+
+/* ── Following & My List ── */
+var following=[];var myList=[];
+function loadFollowing(){try{following=JSON.parse(localStorage.getItem('sg_following')||'[]');}catch(e){following=[];}}
+function saveFollowing(){try{localStorage.setItem('sg_following',JSON.stringify(following));}catch(e){}}
+function isFollowing(id){return following.some(function(f){return f.id===id;});}
+function toggleFollow(item){
+  if(!item)return false;haptic('medium');
+  var idx=following.findIndex(function(f){return f.id===item.id;});
+  if(idx>=0){following.splice(idx,1);saveFollowing();showToast('Niet meer gevolgd');return false;}
+  following.push({id:item.id,title:item.title,img:item.img||imgCache[item.id]||'',_type:item._type,_key:item._key,_src:item._src,tmdb_id:item.tmdb_id||null,_genres:item._genres||[]});
+  saveFollowing();return true;
+}
+function loadMyList(){try{myList=JSON.parse(localStorage.getItem('sg_mylist')||'[]');}catch(e){myList=[];}}
+function saveMyList(){try{localStorage.setItem('sg_mylist',JSON.stringify(myList));}catch(e){}}
+function isInMyList(id){var item=allItems.find(function(i){return String(i.id)===String(id);});return myList.some(function(f){if(f.id===id)return true;if(item&&f.title&&item.title&&f.title.toLowerCase()===item.title.toLowerCase()&&f._type===item._type)return true;return false;});}
+function addToMyList(item){
+  if(!item)return false;haptic('medium');
+  var titleLower=(item.title||'').toLowerCase();
+  var exists=myList.some(function(f){if(f.id===item.id)return true;if(f.title&&f.title.toLowerCase()===titleLower&&f._type===item._type)return true;return false;});
+  if(exists)return false;
+  myList.push({id:item.id,title:item.title,img:item.img||imgCache[item.id]||'',_type:item._type,_key:item._key,_src:item._src,tmdb_id:item.tmdb_id||null,_genres:item._genres||[]});
+  saveMyList();return true;
+}
+function removeFromMyList(id){haptic('light');var idx=myList.findIndex(function(f){return f.id===id;});if(idx>=0){myList.splice(idx,1);saveMyList();return true;}return false;}
+
+function getSetting(k,def){try{var v=localStorage.getItem('sg_'+k);return v!==null?v:def;}catch(e){return def;}}
+function setSetting(k,v){try{localStorage.setItem('sg_'+k,v);}catch(e){}}
+function getSettingBool(k){return getSetting(k,'false')==='true';}
+var posterSize='compact';
+
+function showToast(msg){var t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2400);}
+function scGet(k){try{var v=sessionStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function scSet(k,v){try{sessionStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+var LC_TTL=4*60*60*1000;
+function lcGet(k){try{var raw=localStorage.getItem('sgc_'+k);if(!raw)return null;var obj=JSON.parse(raw);if(Date.now()-obj.t>LC_TTL)return null;return obj.d;}catch(e){return null;}}
+function lcSet(k,v){try{localStorage.setItem('sgc_'+k,JSON.stringify({t:Date.now(),d:v}));}catch(e){try{Object.keys(localStorage).forEach(function(key){if(key.startsWith('sgc_'))localStorage.removeItem(key);});localStorage.setItem('sgc_'+k,JSON.stringify({t:Date.now(),d:v}));}catch(e2){}}}
+
+function dateOffset(o){var d=new Date();d.setDate(d.getDate()+o);var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd;}
+function dateStr(o){return dateOffset(o).replace(/-/g,'');}
+function isoDate(w){if(!w)return '';var s=String(w);if(s.includes('-'))return s.slice(0,10);return s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8);}
+function todayISO(){var d=new Date();var parts=d.toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).split('-');return parts[2]+'-'+parts[1]+'-'+parts[0];}
+function dayNameShort(iso){return new Date(iso+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'short'}).replace(/^\w/,function(c){return c.toUpperCase();});}
+function dayNum(iso){return new Date(iso+'T12:00:00').getDate();}
+function monthShort(iso){return new Date(iso+'T12:00:00').toLocaleDateString('nl-NL',{month:'short'}).replace(/^\w/,function(c){return c.toUpperCase();});}
+function fullDate(iso){return new Date(iso+'T12:00:00').toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});}
+function getDateLabel(iso){var t=todayISO();if(iso===t)return 'Vandaag';if(iso===dateOffset(-1))return 'Gisteren';if(iso===dateOffset(1))return 'Morgen';return dayNameShort(iso);}
+
+function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');var next=cur==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',next);try{localStorage.setItem('streamgids_theme',next);}catch(e){}updateMetaThemeColor();}
+function updateThemeIndicator(){var el=document.getElementById('themeIndicator');if(!el)return;}
+function cycleTheme(){var cur=getSetting('theme','system');var next=cur==='system'?'light':cur==='light'?'dark':'system';setSetting('theme',next);if(next==='system'){var dk=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',dk?'dark':'light');localStorage.removeItem('streamgids_theme');}else{document.documentElement.setAttribute('data-theme',next);try{localStorage.setItem('streamgids_theme',next);}catch(e){}}updateThemeIndicator();updateMetaThemeColor();drawHeaderLogo();}
+
+function goHome(){activeTab='stream';selectedDate=todayISO();typeFilter='all';svcFilter='all';streamType='all';streamSubFilter=null;svcBarVisible=false;document.querySelectorAll('.bnav').forEach(function(n){n.classList.toggle('active',n.getAttribute('data-f')==='stream');});var dt=document.getElementById('dateTabs');var sb=document.getElementById('svcBar');var fb=document.getElementById('filterBar');if(dt)dt.style.display='';if(sb)sb.style.display='none';if(fb)fb.style.display='';updateSvcClearFloat();buildDateTabs();buildFilterChips();renderMain();window.scrollTo({top:0,behavior:'smooth'});}
+
+function shareItem(){if(!currentModalItem)return;var t=currentModalItem.title||'StreamGids';var txt='Bekijk "'+t+'" via StreamGids';if(navigator.share){navigator.share({title:t,text:txt,url:location.href}).catch(function(){});}else{window.open('https://wa.me/?text='+encodeURIComponent(txt+' '+location.href),'_blank');}}
+
+function wm(path,params){params=params||{};var url=new URL(WM_BASE+path);url.searchParams.set('apiKey',WM_KEY);Object.keys(params).forEach(function(k){url.searchParams.set(k,params[k]);});var ck='wm_'+url.toString();var c=scGet(ck);if(c)return Promise.resolve(c);return fetch(url.toString()).then(function(r){if(!r.ok)throw new Error('WM '+r.status);return r.json();}).then(function(d){scSet(ck,d);return d;});}
+function tmdb(path,params){params=params||{};var url=new URL(TMDB_BASE+path);Object.keys(params).forEach(function(k){url.searchParams.set(k,params[k]);});var ck='tmdb_'+url.toString();var c=scGet(ck);if(c)return Promise.resolve(c);return fetch(url.toString(),{headers:{'Authorization':'Bearer '+TMDB_TOKEN,'Content-Type':'application/json'}}).then(function(r){if(!r.ok)throw new Error('TMDB '+r.status);return r.json();}).then(function(d){scSet(ck,d);return d;});}
+function translateToNL(text){if(!text||!text.trim())return Promise.resolve('Geen beschrijving beschikbaar.');return fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,500))+'&langpair=en|nl').then(function(r){return r.json();}).then(function(d){var t=d&&d.responseData&&d.responseData.translatedText;return(t&&t!==text&&t.toLowerCase().indexOf('mymemory')===-1)?t:text;}).catch(function(){return text;});}
+
+
+/* ── Data fetching (unchanged core) ── */
+function fetchWMSources(){return wm('/sources',{regions:'NL'}).then(function(data){var all=Array.isArray(data)?data:[];all.filter(function(s){return s.regions&&s.regions.includes('NL');}).forEach(function(s){wmSourceMap[s.id]=s;});wmSources=all.filter(function(s){return s.type==='sub'&&s.regions&&s.regions.includes('NL');});}).catch(function(e){console.warn('WM sources:',e);wmSources=[];});}
+function fetchWMReleases(){var from=dateStr(-60),to=dateStr(30);return Promise.all([wm('/releases',{regions:'NL',start_date:from,end_date:to,types:'movie',limit:'500'}),wm('/releases',{regions:'NL',start_date:from,end_date:to,types:'tv_series,tv_miniseries,tv_special,tv_movie',limit:'500'})]).then(function(res){function parse(r,ft){return(r&&r.releases||[]).map(function(item){var src=wmSourceMap[item.source_id]||{name:item.source_name||''};var sn=(src.name||'').replace(/Netherlands/gi,'').trim();if(!sn||(!isNLStreaming(sn)&&!(src.regions&&src.regions.includes('NL'))))return null;var rv=resolveType(item.type||item.title_type)||ft;return Object.assign({},item,{img:item.poster_url||null,_type:rv,_date:isoDate(item.source_release_date),_src:Object.assign({},src,{name:sn||src.name}),_style:getSvcStyle(sn),_key:providerKey(sn),_originType:detectOrigin(sn),_source:'watchmode',_season:item.season_number||null});}).filter(Boolean);}return parse(res[0],'movie').concat(parse(res[1],'tv'));});}
+function fetchTMDBProviders(){var cached=lcGet('tmdb_providers');if(cached){Object.keys(cached).forEach(function(k){TMDB_NL_PROVIDERS[k]=cached[k];});return Promise.resolve();}return Promise.all([tmdb('/watch/providers/movie',{watch_region:'NL',language:'nl-NL'}),tmdb('/watch/providers/tv',{watch_region:'NL',language:'nl-NL'})]).then(function(res){var seen={};(res[0].results||[]).concat(res[1].results||[]).forEach(function(p){if(seen[p.provider_id])return;seen[p.provider_id]=true;var m=matchProvider(p.provider_name);if(!m)return;TMDB_NL_PROVIDERS[p.provider_id]={name:m.name,color:m.color,text:m.text,logo:p.logo_path?'https://image.tmdb.org/t/p/original'+p.logo_path:null,rawName:p.provider_name};});lcSet('tmdb_providers',TMDB_NL_PROVIDERS);});}
+function tmdbPages(path,params,maxP){maxP=maxP||3;return tmdb(path,Object.assign({},params,{page:1})).catch(function(){return{results:[],total_pages:0};}).then(function(first){var all=(first.results||[]).slice();var total=Math.min(first.total_pages||1,maxP);if(total<=1)return all;var ps=[];for(var i=2;i<=total;i++){(function(pg){ps.push(tmdb(path,Object.assign({},params,{page:pg})).catch(function(){return{results:[]};}));})(i);}return Promise.all(ps).then(function(rest){rest.forEach(function(r){all=all.concat(r.results||[]);});return all;});});}
+
+function fetchTMDBReleases(){
+  var cached=lcGet('tmdb_releases');if(cached){console.log('[StreamGids] TMDB releases from cache ('+cached.length+')');return Promise.resolve(cached);}
+  var items=[];var entries=Object.keys(TMDB_NL_PROVIDERS).map(function(id){return[id,TMDB_NL_PROVIDERS[id]];});if(!entries.length)return Promise.resolve([]);
+  function makeItem(m,prov,id,type,overrideDate,epInfo){var date=overrideDate||(type==='movie'?(m.release_date||''):(m.first_air_date||''));if(!date||!m.id)return null;return{id:'tmdb-'+m.id+'-'+id+(overrideDate?'-'+overrideDate:''),title:m.title||m.name||m.original_title||m.original_name||'',img:m.poster_path?TMDB_IMG+m.poster_path:null,_type:type,_date:date,_src:{name:prov.name,logo_100px:canonicalProviderLogo(providerKey(prov.name))||prov.logo},_style:{color:prov.color,text:prov.text},_key:providerKey(prov.name),_originType:detectOrigin(prov.name),_source:'tmdb',_providerId:Number(id),tmdb_id:m.id,user_rating:m.vote_average||0,overview:m.overview||'',_epInfo:epInfo||null,_genres:m.genre_ids||[]};}
+  var sub=document.getElementById('loadSub');if(sub)sub.textContent='TMDB: actuele titels ophalen...';
+  return Promise.all([tmdb('/movie/now_playing',{language:'nl-NL',region:'NL',page:1}).catch(function(){return{results:[]};}),tmdb('/tv/on_the_air',{language:'nl-NL',page:1}).catch(function(){return{results:[]};})]).then(function(res){
+    var movies=res[0].results||[];var tvShows=(res[1].results||[]).slice(0,20);
+    var checks=movies.slice(0,20).map(function(m){return Object.assign({},m,{_isTV:false});}).concat(tvShows.map(function(t){return Object.assign({},t,{_isTV:true,_epDate:null,_epInfo:null});}));
+    return Promise.all(checks.map(function(m){return tmdb('/'+(m._isTV?'tv':'movie')+'/'+m.id+'/watch/providers').then(function(pd){var flat=pd&&pd.results&&pd.results.NL&&pd.results.NL.flatrate||[];var rentBuy=(pd&&pd.results&&pd.results.NL&&pd.results.NL.rent||[]).concat(pd&&pd.results&&pd.results.NL&&pd.results.NL.buy||[]);flat.forEach(function(p){var prov=TMDB_NL_PROVIDERS[p.provider_id];if(!prov)return;var it=makeItem(m,prov,p.provider_id,m._isTV?'tv':'movie',null,null);if(it){it._monetization='flatrate';items.push(it);}});rentBuy.forEach(function(p){var prov=TMDB_NL_PROVIDERS[p.provider_id];if(!prov)return;var it=makeItem(m,prov,p.provider_id,m._isTV?'tv':'movie',null,null);if(it){it._monetization='rent';items.push(it);}});}).catch(function(){});}));
+  }).then(function(){lcSet('tmdb_releases',items);return items;});
+}
+
+function enrichEpisodeDetails(){var tvItems=allItems.filter(function(i){return i._type==='tv'&&i._source==='tmdb'&&!i._epInfo&&i.tmdb_id;});if(!tvItems.length)return;var idx=0;function next(){if(idx>=tvItems.length)return Promise.resolve();var batch=tvItems.slice(idx,idx+8);idx+=8;return Promise.all(batch.map(function(item){return tmdb('/tv/'+item.tmdb_id,{language:'nl-NL'}).then(function(detail){var candidates=[];if(detail.next_episode_to_air)candidates.push({date:detail.next_episode_to_air.air_date,s:detail.next_episode_to_air.season_number,e:detail.next_episode_to_air.episode_number,name:detail.next_episode_to_air.name||''});if(detail.last_episode_to_air)candidates.push({date:detail.last_episode_to_air.air_date,s:detail.last_episode_to_air.season_number,e:detail.last_episode_to_air.episode_number,name:detail.last_episode_to_air.name||''});var today=todayISO();var best=null;candidates.forEach(function(c){if(!c.date)return;if(!best)best=c;else if(Math.abs(new Date(c.date)-new Date(today))<Math.abs(new Date(best.date)-new Date(today)))best=c;});if(!best)return;if(best.date){var d=new Date(best.date+'T12:00:00');d.setDate(d.getDate()+1);item._date=d.toISOString().slice(0,10);}return tmdb('/tv/'+item.tmdb_id+'/season/'+best.s,{language:'nl-NL'}).then(function(seasonDetail){var eps=seasonDetail.episodes||[];var aired=eps.filter(function(ep){return ep.air_date&&ep.air_date<=today;}).length;var firstEpDate=(eps.length>0&&eps[0].air_date)?eps[0].air_date:null;item._epInfo={s:best.s,e:best.e,name:best.name,seasonEpisodeCount:eps.length,airedEpisodes:aired,isCompleteDrop:Object.keys(eps.reduce(function(a,ep){if(ep.air_date)a[ep.air_date]=true;return a;},{})).length<=1,seasonFirstAirDate:firstEpDate};}).catch(function(){});}).catch(function(){});})).then(next);}return next().then(function(){var tmdbItems=allItems.filter(function(i){return i._source==='tmdb';});lcSet('tmdb_releases',tmdbItems);if(activeTab==='stream'){buildSvcBar();renderMain();}});}
+
+function fetchRemainingTMDBPages(){return Promise.all([tmdbPages('/movie/now_playing',{language:'nl-NL',region:'NL'},5),tmdbPages('/tv/on_the_air',{language:'nl-NL'},5)]).then(function(res){var existingIds={};allItems.forEach(function(i){if(i.tmdb_id)existingIds[i.tmdb_id]=true;});var newMovies=(res[0]||[]).filter(function(m){return !existingIds[m.id];});var newTV=(res[1]||[]).filter(function(t){return !existingIds[t.id];});if(!newMovies.length&&!newTV.length)return;var checks=newMovies.map(function(m){return Object.assign({},m,{_isTV:false});}).concat(newTV.map(function(t){return Object.assign({},t,{_isTV:true});}));var newItems=[];return Promise.all(checks.map(function(m){return tmdb('/'+(m._isTV?'tv':'movie')+'/'+m.id+'/watch/providers').then(function(pd){var flat=pd&&pd.results&&pd.results.NL&&pd.results.NL.flatrate||[];var rentBuy=(pd&&pd.results&&pd.results.NL&&pd.results.NL.rent||[]).concat(pd&&pd.results&&pd.results.NL&&pd.results.NL.buy||[]);flat.forEach(function(p){var prov=TMDB_NL_PROVIDERS[p.provider_id];if(!prov)return;newItems.push({id:'tmdb-'+m.id+'-'+p.provider_id,title:m.title||m.name||'',img:m.poster_path?TMDB_IMG+m.poster_path:null,_type:m._isTV?'tv':'movie',_date:m._isTV?(m.first_air_date||''):(m.release_date||''),_src:{name:prov.name,logo_100px:canonicalProviderLogo(providerKey(prov.name))||prov.logo},_style:{color:prov.color,text:prov.text},_key:providerKey(prov.name),_originType:detectOrigin(prov.name),_source:'tmdb',_providerId:Number(p.provider_id),tmdb_id:m.id,user_rating:m.vote_average||0,overview:m.overview||'',_epInfo:null,_genres:m.genre_ids||[],_monetization:'flatrate'});});rentBuy.forEach(function(p){var prov=TMDB_NL_PROVIDERS[p.provider_id];if(!prov)return;newItems.push({id:'tmdb-'+m.id+'-'+p.provider_id+'-rent',title:m.title||m.name||'',img:m.poster_path?TMDB_IMG+m.poster_path:null,_type:m._isTV?'tv':'movie',_date:m._isTV?(m.first_air_date||''):(m.release_date||''),_src:{name:prov.name,logo_100px:canonicalProviderLogo(providerKey(prov.name))||prov.logo},_style:{color:prov.color,text:prov.text},_key:providerKey(prov.name),_originType:detectOrigin(prov.name),_source:'tmdb',_providerId:Number(p.provider_id),tmdb_id:m.id,user_rating:m.vote_average||0,overview:m.overview||'',_epInfo:null,_genres:m.genre_ids||[],_monetization:'rent'});});}).catch(function(){});})).then(function(){if(newItems.length){newItems.forEach(function(ni){allItems.push(ni);});if(activeTab==='stream'){buildSvcBar();renderMain();}console.log('[StreamGids] +'+newItems.length+' extra TMDB items geladen');}});});}
+
+/* ── Google Sheets CSV fetch ── */
+function fetchGoogleSheet(){if(!GOOGLE_SHEET_CSV_URL)return Promise.resolve([]);var ck='gsheet_'+GOOGLE_SHEET_CSV_URL;var c=scGet(ck);if(c)return Promise.resolve(c);return fetch(GOOGLE_SHEET_CSV_URL).then(function(r){if(!r.ok)throw new Error('Sheet HTTP '+r.status);return r.text();}).then(function(csv){var lines=csv.split('\n');if(lines.length<2)return[];var hdr=lines[0].split(',').map(function(h){return h.trim().toLowerCase().replace(/['"]/g,'');});var ci={titel:hdr.indexOf('titel'),tmdb_id:hdr.indexOf('tmdb_id'),datum:hdr.indexOf('datum'),dienst:hdr.indexOf('dienst'),type:hdr.indexOf('type')};if(ci.titel===-1)ci.titel=0;if(ci.datum===-1)ci.datum=2;if(ci.dienst===-1)ci.dienst=3;var items=[];for(var i=1;i<lines.length;i++){var line=lines[i].trim();if(!line)continue;var cols=[];var cur='',inQ=false;for(var j=0;j<line.length;j++){var ch=line[j];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else{cur+=ch;}}cols.push(cur.trim());var titel=(cols[ci.titel]||'').replace(/^["']|["']$/g,'').trim();var tmdbId=(ci.tmdb_id>=0&&cols[ci.tmdb_id]||'').replace(/^["']|["']$/g,'').trim();var datum=(cols[ci.datum]||'').replace(/^["']|["']$/g,'').trim();var dienst=(cols[ci.dienst]||'').replace(/^["']|["']$/g,'').trim().toLowerCase();var type=(ci.type>=0&&cols[ci.type]||'movie').replace(/^["']|["']$/g,'').trim().toLowerCase();if(!titel||!datum)continue;var prov=matchProvider(dienst);items.push({id:'gs-'+i+'-'+titel.replace(/\s/g,'-').slice(0,20),title:titel,img:null,_type:type==='tv'?'tv':'movie',_date:datum,_src:{name:prov?prov.name:dienst,logo_100px:null},_style:{color:prov?prov.color:'#444',text:'#fff'},_key:prov?prov.key:dienst,_originType:detectOrigin(prov?prov.name:dienst),_source:'googlesheet',tmdb_id:tmdbId?Number(tmdbId):null,overview:'',user_rating:0});}console.log('[StreamGids] Google Sheet: '+items.length+' handmatige releases');scSet(ck,items);return items;}).catch(function(e){console.warn('[StreamGids] Google Sheet fout:',e);return[];});}
+
+function enrichSheetItems(items){if(!items.length)return Promise.resolve(items);var cached=lcGet('gs_enriched');if(cached&&cached.length){console.log('[StreamGids] GS enriched from cache ('+cached.length+')');cached.forEach(function(ci){if(ci.img)imgCache[ci.id]=ci.img;});return Promise.resolve(cached);}var idx=0;function next(){if(idx>=items.length)return Promise.resolve();var batch=items.slice(idx,idx+10);idx+=10;return Promise.all(batch.map(function(item){var p;if(item.tmdb_id){p=tmdb('/'+(item._type==='tv'?'tv':'movie')+'/'+item.tmdb_id,{language:'nl-NL'});}else{p=tmdb('/search/'+(item._type==='tv'?'tv':'movie'),{query:item.title,language:'nl-NL'}).then(function(res){var hit=(res.results||[])[0];if(hit){item.tmdb_id=hit.id;return hit;}return null;});}return p.then(function(d){if(!d)return;if(d.poster_path){item.img=TMDB_IMG+d.poster_path;imgCache[item.id]=item.img;}if(d.overview&&!item.overview)item.overview=d.overview;if(!item.title&&(d.title||d.name))item.title=d.title||d.name;}).catch(function(){});})).then(next);}return next().then(function(){items.forEach(function(item){if(!item._src.logo_100px){var pk=(item._key||'').toLowerCase();Object.keys(TMDB_NL_PROVIDERS).forEach(function(pid){var pr=TMDB_NL_PROVIDERS[pid];if(pr&&pr.name&&providerKey(pr.name)===pk&&pr.logo)item._src.logo_100px=pr.logo;});}});lcSet('gs_enriched',items);return items;});}
+
+function enrichSheetEpisodeDetails(){var gsTV=allItems.filter(function(i){return i._source==='googlesheet'&&i._type==='tv'&&!i._epInfo&&i.tmdb_id;});if(!gsTV.length)return Promise.resolve();var idx=0;function next(){if(idx>=gsTV.length)return Promise.resolve();var batch=gsTV.slice(idx,idx+8);idx+=8;return Promise.all(batch.map(function(item){return tmdb('/tv/'+item.tmdb_id,{language:'nl-NL'}).then(function(detail){var candidates=[];if(detail.next_episode_to_air)candidates.push({date:detail.next_episode_to_air.air_date,s:detail.next_episode_to_air.season_number,e:detail.next_episode_to_air.episode_number,name:detail.next_episode_to_air.name||''});if(detail.last_episode_to_air)candidates.push({date:detail.last_episode_to_air.air_date,s:detail.last_episode_to_air.season_number,e:detail.last_episode_to_air.episode_number,name:detail.last_episode_to_air.name||''});if(!candidates.length)return;var today=todayISO();var best=null;candidates.forEach(function(c){if(!c.date)return;if(!best)best=c;else if(Math.abs(new Date(c.date)-new Date(today))<Math.abs(new Date(best.date)-new Date(today)))best=c;});if(!best)return;return tmdb('/tv/'+item.tmdb_id+'/season/'+best.s,{language:'nl-NL'}).then(function(seasonDetail){var eps=seasonDetail.episodes||[];var aired=eps.filter(function(ep){return ep.air_date&&ep.air_date<=today;}).length;var firstEpDate=(eps.length>0&&eps[0].air_date)?eps[0].air_date:null;var matchedEp=best;if(item._date&&eps.length){var gsTime=new Date(item._date+'T12:00:00').getTime();var closestDist=Infinity;eps.forEach(function(ep){if(!ep.air_date)return;var nlDate=new Date(ep.air_date+'T12:00:00');nlDate.setDate(nlDate.getDate()+1);var dist=Math.abs(nlDate.getTime()-gsTime);if(dist<closestDist){closestDist=dist;matchedEp={s:best.s,e:ep.episode_number,name:ep.name||''};}});}item._epInfo={s:matchedEp.s,e:matchedEp.e,name:matchedEp.name,seasonEpisodeCount:eps.length,airedEpisodes:aired,isCompleteDrop:false,seasonFirstAirDate:firstEpDate};}).catch(function(){});}).catch(function(){});})).then(next);}return next().then(function(){var gsItems=allItems.filter(function(i){return i._source==='googlesheet';});lcSet('gs_enriched',gsItems);if(activeTab==='stream'){buildSvcBar();renderMain();}});}
+
+/* ── MERGE ── */
+function mergeItems(wm,tm,gs){var result=[];var titleProvMap={};var seen={};function addItem(i){if(!i._date||!i.title)return;var tl=(i.title||'').toLowerCase().trim();var tk=tl+'|'+i._key;if(seen[tk])return;seen[tk]=true;if(titleProvMap[tl]){var existing=titleProvMap[tl];if(existing.providers.indexOf(i._key)===-1){existing.providers.push(i._key);if(!existing.item._alsoOn)existing.item._alsoOn=[];var dn=(i._src&&i._src.name||i._key).replace(/Netherlands/gi,'').trim();if(existing.item._alsoOn.indexOf(dn)===-1)existing.item._alsoOn.push(dn);}return;}titleProvMap[tl]={item:i,providers:[i._key]};result.push(i);}var apiDateKeys={};function addApiItem(i){addItem(i);if(i._date&&i.title){var dk=(i.title||'').toLowerCase().trim()+'|'+i._key+'|'+i._date;apiDateKeys[dk]=true;}}wm.forEach(function(i){addApiItem(i);});tm.forEach(function(i){addApiItem(i);});(gs||[]).forEach(function(i){if(!i._date||!i.title)return;var tl=(i.title||'').toLowerCase().trim();if(i._type==='tv'){var dateKey=tl+'|'+i._key+'|'+i._date;if(apiDateKeys[dateKey])return;if(seen[dateKey])return;seen[dateKey]=true;if(titleProvMap[tl]){var ex=titleProvMap[tl].item;if(!i.img&&ex.img){i.img=ex.img;imgCache[i.id]=ex.img;}if(!i.overview&&ex.overview)i.overview=ex.overview;if(!i.tmdb_id&&ex.tmdb_id)i.tmdb_id=ex.tmdb_id;}result.push(i);}else{addItem(i);}});return result;}
+
+
+/* ── DATE TABS with count badges ── */
+function getItemCountForDate(iso){
+  return allItems.filter(function(i){return i._date===iso&&(imgCache[i.id]||i.img);}).length;
+}
+
+function buildDateTabs(){
+  var c=document.getElementById('dateTabs');allDays=[];
+  for(var i=-7;i<=14;i++)allDays.push(dateOffset(i));
+  if(!selectedDate)selectedDate=todayISO();
+  var minDate=dateOffset(-7),maxDate=dateOffset(14);
+  if(selectedDate<minDate||selectedDate>maxDate)selectedDate=todayISO();
+  var today=todayISO();
+  c.innerHTML=allDays.map(function(iso){
+    var label=getDateLabel(iso);var isActive=iso===selectedDate;var isToday=iso===today;
+    var cnt=getItemCountForDate(iso);
+    var countBadge=cnt>0?'<span class="dtab-count">'+cnt+'</span>':'';
+    var sub=isToday?'':'<span class="dsub">'+dayNum(iso)+' '+monthShort(iso)+'</span>';
+    return '<button class="dtab'+(isActive?' active':'')+(isToday?' is-today':'')+'" data-date="'+iso+'">'+label+countBadge+sub+'</button>';
+  }).join('');
+  setTimeout(function(){var a=c.querySelector('.dtab.active');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});},50);
+}
+function selectDate(iso){haptic('light');selectedDate=iso;document.querySelectorAll('.dtab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-date')===iso);});var a=document.querySelector('.dtab.active');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});window.scrollTo({top:0,behavior:'smooth'});renderMain();}
+function navigateDay(direction){if(!allDays.length)return;var curIdx=allDays.indexOf(selectedDate);if(curIdx===-1)return;var newIdx=curIdx+direction;if(newIdx<0||newIdx>=allDays.length)return;selectDate(allDays[newIdx]);}
+
+/* ── SERVICE BAR (toggled via filter chip) ── */
+function buildSvcBar(){
+  var bar=document.getElementById('svcBar');var provMap={};
+  allItems.forEach(function(item){var k=item._key||'';if(provMap[k])return;provMap[k]={name:capitalizeProvider(item._src&&item._src.name||k),style:item._style,logo:item._src&&item._src.logo_100px||null};});
+  var keys=Object.keys(provMap).sort(function(a,b){var ra=POPULAR_KEYS.indexOf(a);if(ra===-1)ra=999;var rb=POPULAR_KEYS.indexOf(b);if(rb===-1)rb=999;if(ra!==rb)return ra-rb;return provMap[a].name.localeCompare(provMap[b].name);});
+  var html='<button class="sc active" data-k="all">Alle streamers</button>';
+  keys.forEach(function(k){var info=provMap[k];var logo=info.logo?'<img src="'+info.logo+'" alt="'+info.name+'" onerror="this.style.display=\'none\'" loading="lazy">':'<div class="dot" style="background:'+info.style.color+'"></div>';html+='<button class="sc'+(svcFilter===k?' active':'')+'" data-k="'+k+'">'+logo+info.name+'</button>';});
+  bar.innerHTML=html;
+}
+
+/* ── Floating clear filter button ── */
+function updateSvcClearFloat(){
+  var btn=document.getElementById('svcClearFloat');
+  var label=document.getElementById('svcClearLabel');
+  if(!btn)return;
+  if(svcFilter!=='all'&&activeTab==='stream'){
+    btn.style.display='flex';
+    if(label)label.textContent=capitalizeProvider(svcFilter)+' ✕';
+  }else{
+    btn.style.display='none';
+  }
+}
+
+/* ── Sport events ── */
+function sportEventsToItems(evs){return(evs||[]).map(function(ev){var logo=getSportLogo(ev.sport,ev.subtitle);var prov=matchProvider(ev.streamer);if(!logo&&prov){logo=canonicalProviderLogo(prov.key)||null;}var d=ev.date;var parts=d.toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).split('-');var dateISO=parts[2]+'-'+parts[1]+'-'+parts[0];var timeStr=d.toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'});return{id:ev.id,title:ev.title,img:logo||null,_type:'live',_date:dateISO,_src:{name:prov?prov.name:ev.streamer,logo_100px:null},_style:{color:prov?prov.color:'#444',text:'#fff'},_key:prov?prov.key:(ev.streamer||'').toLowerCase().replace(/\s+/g,' ').trim(),_originType:'live',_source:'sport',overview:(ev.subtitle||'')+(ev.venue?' \u00b7 '+ev.venue:''),user_rating:0,_sportCategory:ev.sport||'',_sportSub:ev.subtitle||'',_sportTime:timeStr,_isLiveNow:ev.isLive||false};});}
+function getSportCategory(item){var s=(item._sportCategory||'').toLowerCase();var sub=(item._sportSub||'').toLowerCase();if(s.indexOf('voetbal')!==-1||sub.indexOf('league')!==-1||sub.indexOf('liga')!==-1||sub.indexOf('eredivisie')!==-1||sub.indexOf('champions')!==-1)return 'voetbal';if(s.indexOf('ufc')!==-1||s.indexOf('mma')!==-1)return 'ufc';if(s.indexOf('wwe')!==-1||s.indexOf('wrestling')!==-1)return 'wwe';if(s.indexOf('f1')!==-1||s.indexOf('formule')!==-1||sub.indexOf('formule')!==-1)return 'f1';if(s.indexOf('event')!==-1||s.indexOf('award')!==-1||s.indexOf('show')!==-1||s.indexOf('live event')!==-1)return 'live_other';return 'sport_other';}
+
+/* ── FILTER CHIPS (with provider toggle) ── */
+function buildFilterChips(){
+  var fc=document.getElementById('filterChips');if(!fc)return;
+  var html='';
+  /* Provider toggle chip */
+  var svcToggle='<button class="filter-chip svc-toggle-chip'+(svcBarVisible?' active':'')+'" data-sf="toggle_svc">Dienst'+(svcFilter!=='all'?': '+capitalizeProvider(svcFilter):'')+'</button>';
+
+  if(streamType==='all'){
+    html='<button class="filter-chip active" data-sf="all">Alles</button>';
+    html+='<button class="filter-chip" data-sf="movie">Films</button>';
+    html+='<button class="filter-chip" data-sf="tv">Series</button>';
+    html+='<button class="filter-chip" data-sf="live">Live</button>';
+    html+=svcToggle;
+  }else if(streamType==='movie'){
+    html='<button class="filter-chip back-chip" data-sf="back">&larr;</button>';
+    html+='<button class="filter-chip'+(streamSubFilter===null?' active':'')+'" data-sf="movie_all">Alle films</button>';
+    html+=svcToggle;
+  }else if(streamType==='tv'){
+    html='<button class="filter-chip back-chip" data-sf="back">&larr;</button>';
+    html+='<button class="filter-chip'+(streamSubFilter===null?' active':'')+'" data-sf="tv_all">Alle series</button>';
+    html+='<button class="filter-chip'+(streamSubFilter==='seasons'?' active':'')+'" data-sf="seasons">Nieuwe seizoenen</button>';
+    html+='<button class="filter-chip'+(streamSubFilter==='episodes'?' active':'')+'" data-sf="episodes">Nieuwe afleveringen</button>';
+    html+=svcToggle;
+  }else if(streamType==='live'){
+    html='<button class="filter-chip back-chip" data-sf="back">&larr;</button>';
+    html+='<button class="filter-chip'+(streamSubFilter===null?' active':'')+'" data-sf="live_all">Alles</button>';
+    html+='<button class="filter-chip'+(streamSubFilter==='voetbal'?' active':'')+'" data-sf="voetbal">Voetbal</button>';
+    html+='<button class="filter-chip'+(streamSubFilter==='ufc'?' active':'')+'" data-sf="ufc">UFC</button>';
+    html+='<button class="filter-chip'+(streamSubFilter==='wwe'?' active':'')+'" data-sf="wwe">WWE</button>';
+    html+='<button class="filter-chip'+(streamSubFilter==='f1'?' active':'')+'" data-sf="f1">F1</button>';
+    html+='<button class="filter-chip'+(streamSubFilter==='sport_other'?' active':'')+'" data-sf="sport_other">Andere sport</button>';
+    html+='<button class="filter-chip'+(streamSubFilter==='live_other'?' active':'')+'" data-sf="live_other">Live events</button>';
+  }
+  fc.innerHTML=html;
+}
+function handleFilterClick(sf){
+  if(sf==='toggle_svc'){
+    svcBarVisible=!svcBarVisible;
+    var sb=document.getElementById('svcBar');
+    if(sb)sb.style.display=svcBarVisible?'':'none';
+    buildFilterChips();
+    if(svcBarVisible){
+      /* Auto-scroll to active chip */
+      setTimeout(function(){var a=sb.querySelector('.sc.active');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});},50);
+    }
+    return;
+  }
+  haptic('light');
+  if(sf==='back'){streamType='all';streamSubFilter=null;buildFilterChips();renderStreamView();return;}
+  if(streamType==='all'){
+    if(sf==='all'){streamSubFilter=null;buildFilterChips();renderStreamView();}
+    else{streamType=sf;streamSubFilter=null;buildFilterChips();renderStreamView();}
+  }else{
+    if(sf===streamType+'_all'){streamSubFilter=null;}
+    else{streamSubFilter=sf;}
+    buildFilterChips();renderStreamView();
+  }
+}
+
+/* ── MAIN RENDER ── */
+function filteredItems(){return allItems.filter(function(i){if(streamType==='movie'&&i._type!=='movie')return false;if(streamType==='tv'&&i._type!=='tv')return false;if(streamType==='live'&&i._type!=='live')return false;if(svcFilter!=='all'&&i._key!==svcFilter)return false;return !!i._date;});}
+function applySubFilter(items){if(!streamSubFilter)return items;if(streamSubFilter==='episodes')return items.filter(function(i){return i._type==='tv'&&(i._epInfo&&i._epInfo.s||i._source==='googlesheet');});if(streamSubFilter==='seasons')return items.filter(function(i){return i._type==='tv'&&(i._season||(i._epInfo&&i._epInfo.e===1));});if(streamSubFilter==='voetbal'||streamSubFilter==='ufc'||streamSubFilter==='wwe'||streamSubFilter==='f1'||streamSubFilter==='sport_other'||streamSubFilter==='live_other'){return items.filter(function(i){return i._type==='live'&&getSportCategory(i)===streamSubFilter;});}return items;}
+function renderStreamView(){document.getElementById('dateTabs').style.display='';renderMain();}
+
+/* ── "Voor Jou" personalized section ── */
+function getVoorJouItems(){
+  /* Collect genre IDs from saved/followed items */
+  var genreCounts={};
+  myList.concat(following).forEach(function(f){
+    (f._genres||[]).forEach(function(g){genreCounts[g]=(genreCounts[g]||0)+1;});
+  });
+  var topGenres=Object.keys(genreCounts).sort(function(a,b){return genreCounts[b]-genreCounts[a];}).slice(0,3).map(Number);
+  if(!topGenres.length)return[];
+  var savedTitles={};myList.concat(following).forEach(function(f){savedTitles[(f.title||'').toLowerCase()]=true;});
+  var candidates=allItems.filter(function(i){
+    if(!i.img&&!imgCache[i.id])return false;
+    if(savedTitles[(i.title||'').toLowerCase()])return false;
+    if(!i._genres||!i._genres.length)return false;
+    return i._genres.some(function(g){return topGenres.indexOf(g)!==-1;});
+  });
+  /* Deduplicate by title */
+  var seen={};var deduped=[];
+  candidates.forEach(function(i){var k=(i.title||'').toLowerCase();if(seen[k])return;seen[k]=true;deduped.push(i);});
+  /* Sort by rating */
+  deduped.sort(function(a,b){return(b.user_rating||0)-(a.user_rating||0);});
+  return deduped.slice(0,12);
+}
+
+function renderVoorJou(main){
+  var items=getVoorJouItems();
+  if(!items.length)return;
+  var sec=document.createElement('div');sec.className='voor-jou-section';
+  sec.innerHTML='<div class="vj-title">Voor jou</div><div class="vj-sub">Gebaseerd op je lijst en gevolgde titels</div><div class="vj-scroll">'+items.map(function(item){
+    var poster=imgCache[item.id]||item.img||'';
+    var title=(item.title||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+    var sid=String(item.id).replace(/['"\\]/g,'');
+    return '<div class="vj-item" data-id="'+sid+'">'+(poster?'<img class="vj-poster" src="'+poster+'" alt="'+title+'" loading="lazy">':'<div class="vj-poster"></div>')+'<div class="vj-name">'+title+'</div><div class="vj-meta">'+(item._type==='movie'?'Film':'Serie')+'</div></div>';
+  }).join('')+'</div>';
+  main.insertBefore(sec,main.firstChild);
+  sec.querySelectorAll('.vj-item').forEach(function(el){el.addEventListener('click',function(){openModal(el.getAttribute('data-id'));});});
+}
+
+function renderMain(){
+  var main=document.getElementById('main');main.innerHTML='';
+  var items=filteredItems().filter(function(i){return i._date===selectedDate;});
+  items=items.filter(function(i){return imgCache[i.id]||i.img;});
+  items=applySubFilter(items);
+
+  /* Show "Voor Jou" on today only */
+  if(selectedDate===todayISO()&&streamType==='all'&&svcFilter==='all'&&!streamSubFilter){
+    renderVoorJou(main);
+  }
+
+  if(!items.length){
+    /* Enhanced empty state with stats */
+    var tomorrowCount=getItemCountForDate(dateOffset(1));
+    var yesterdayCount=getItemCountForDate(dateOffset(-1));
+    var statsHtml='';
+    if(tomorrowCount>0)statsHtml+='<strong>'+tomorrowCount+'</strong> releases morgen';
+    if(tomorrowCount>0&&yesterdayCount>0)statsHtml+=' · ';
+    if(yesterdayCount>0)statsHtml+='<strong>'+yesterdayCount+'</strong> releases gisteren';
+    var ctas='<div class="empty-cta-row">';
+    if(selectedDate!==dateOffset(1))ctas+='<button class="empty-cta-btn" onclick="selectDate(dateOffset(1))">Bekijk morgen</button>';
+    if(selectedDate!==dateOffset(-1))ctas+='<button class="empty-cta-btn" onclick="selectDate(dateOffset(-1))">Bekijk gisteren</button>';
+    ctas+='<button class="empty-cta-btn" onclick="setType(\'top10\')">Bekijk Top 10</button></div>';
+    main.innerHTML+='<div class="empty-state"><div style="font-size:16px;margin-bottom:6px;font-weight:600">Geen releases</div>'+(statsHtml?'<div class="empty-stats">'+statsHtml+'</div>':'')+'<div style="font-size:13px;color:var(--t3);margin-bottom:14px">Geen nieuwe content op '+getDateLabel(selectedDate).toLowerCase()+'. Probeer een andere dag.</div>'+ctas+'</div>';return;
+  }
+  var svcGroups={};var svcOrder=[];
+  items.forEach(function(item){var k=item._key||'overig';if(!svcGroups[k]){svcGroups[k]={name:capitalizeProvider(item._src&&item._src.name||k),logo:item._src&&item._src.logo_100px||null,color:item._style&&item._style.color||'#444',items:[]};svcOrder.push(k);}svcGroups[k].items.push(item);});
+  svcOrder.sort(function(a,b){var ra=POPULAR_KEYS.indexOf(a);if(ra===-1)ra=999;var rb=POPULAR_KEYS.indexOf(b);if(rb===-1)rb=999;if(ra!==rb)return ra-rb;return svcGroups[b].items.length-svcGroups[a].items.length;});
+  svcOrder.forEach(function(key,idx){
+    var g=svcGroups[key];var sec=document.createElement('div');sec.className='svc-section'+(collapsedSections[key]?' collapsed':'');sec.id='svc-'+key;sec.style.animationDelay=(idx*0.04)+'s';
+    var canonLogo=canonicalProviderLogo(key)||g.logo||null;
+    var logoHtml=canonLogo?'<img class="svc-logo" src="'+canonLogo+'" alt="'+g.name+'" onerror="this.style.display=\'none\'" loading="lazy">':'<div class="svc-dot" style="background:'+g.color+'">'+g.name.charAt(0)+'</div>';
+    var mc=g.items.filter(function(i){return i._type==='movie';}).length;var tc=g.items.filter(function(i){return i._type==='tv';}).length;var parts=[];if(mc)parts.push(mc+' film'+(mc>1?'s':''));if(tc)parts.push(tc+' serie'+(tc>1?'s':''));
+    sec.innerHTML='<div class="svc-hdr" data-key="'+key+'">'+logoHtml+'<div class="svc-name">'+g.name+'</div><div class="svc-cnt">'+parts.join(' · ')+'</div><svg class="svc-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="svc-body">'+g.items.map(function(item){return crowHtml(item);}).join('')+'</div>';
+    main.appendChild(sec);
+  });
+}
+
+function crowHtml(item){
+  var title=(item.title||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+  var sid=String(item.id).replace(/['"\\]/g,'');
+  var poster=imgCache[item.id]||item.img||'';
+  var tl=item._type==='movie'?'Film':item._type==='live'?'Live':'Serie';
+  var cls=item._type==='movie'?'film':item._type==='live'?'live':'serie';
+  var sn=capitalizeProvider(item._src&&item._src.name||'Streaming');
+  var epBadge='';
+  if(item._type==='live'){var timeInfo=item._sportTime||'';if(timeInfo)epBadge='<div class="crow-ep-badge">'+timeInfo+'</div>';}
+  else if(item._type==='tv'){var ep=item._epInfo;var hasSeason=!!item._season;var hasEpInfo=!!(ep&&ep.s);var isGS=item._source==='googlesheet';if(hasEpInfo){var totalEps=ep.seasonEpisodeCount||null;var completeDrop=ep.isCompleteDrop||false;if(ep.e===1||completeDrop){epBadge='<div class="crow-ep-badge season">Nieuw seizoen (S'+ep.s+')</div>';}else{if(totalEps){epBadge='<div class="crow-ep-badge">Nieuwe aflevering '+ep.e+' van '+totalEps+'</div>';}else{epBadge='<div class="crow-ep-badge">Nieuwe aflevering</div>';}epBadge+='<div class="crow-ep-badge season">Seizoen '+ep.s+'</div>';}}else if(hasSeason){epBadge='<div class="crow-ep-badge season">Nieuw seizoen (S'+item._season+')</div>';}else if(isGS){epBadge='<div class="crow-ep-badge">Nieuwe aflevering</div>';}}
+
+  /* Also-on provider logos */
+  var alsoOnHtml='';
+  if(item._alsoOn&&item._alsoOn.length>0){
+    alsoOnHtml='<div class="crow-also-on"><span class="crow-also-on-label">Ook op</span>';
+    item._alsoOn.forEach(function(name){
+      var pk=providerKey(name);var logo=canonicalProviderLogo(pk);
+      if(logo)alsoOnHtml+='<img src="'+logo+'" alt="'+name+'" title="'+name+'" loading="lazy">';
+      else alsoOnHtml+='<span style="font-size:10px;color:var(--t3)">'+name+'</span>';
+    });
+    alsoOnHtml+='</div>';
+  }
+
+  var liveCls=item._type==='live'?' live-crow':'';
+  var metaL=item._type==='live'?(item._sportSub||item._sportCategory||'Live')+' - '+sn:tl+' - '+sn;
+  return '<div class="crow'+liveCls+'" data-id="'+sid+'"><div class="crow-poster">'+(poster?'<img src="'+poster+'" alt="'+title+'" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=crow-fb>'+title.replace(/'/g,'').replace(/"/g,'')+'</div>\'">':'<div class="crow-fb" id="fb-'+sid+'">'+title+'</div>')+'</div><div class="crow-info"><div class="crow-title">'+title+'</div>'+epBadge+'<div class="crow-meta">'+metaL+'</div>'+alsoOnHtml+'</div><div class="crow-badge '+cls+'">'+tl+'</div></div>';
+}
+
+function toggleSection(key){collapsedSections[key]=!collapsedSections[key];var sec=document.getElementById('svc-'+key);if(sec)sec.classList.toggle('collapsed');}
+function enrichMissingPosters(){var missing=allItems.filter(function(i){return !i.img&&!imgCache[i.id]&&i.title;});var idx=0;function next(){if(idx>=missing.length)return;var batch=missing.slice(idx,idx+6);idx+=6;Promise.all(batch.map(function(item){var type=item._type==='movie'?'movie':'tv';return tmdb('/search/'+type,{query:item.title,language:'nl-NL'}).then(function(res){var hit=(res.results||[]).find(function(r){return r.poster_path;});if(!hit||!hit.poster_path)return;var url=TMDB_IMG+hit.poster_path;imgCache[item.id]=url;item.img=url;}).catch(function(){});})).then(next);}next();}
+
+
+function setType(f){
+  activeTab=f;haptic('light');
+  document.querySelectorAll('.bnav').forEach(function(n){n.classList.toggle('active',n.getAttribute('data-f')===f);});
+  var dt=document.getElementById('dateTabs');var sb=document.getElementById('svcBar');var fb=document.getElementById('filterBar');
+  if(f==='stream'){streamType='all';streamSubFilter=null;svcBarVisible=false;dt.style.display='';sb.style.display='none';fb.style.display='';updateSvcClearFloat();buildFilterChips();renderMain();}
+  else if(f==='top10'){dt.style.display='none';sb.style.display='none';fb.style.display='none';updateSvcClearFloat();renderTop10();}
+  else if(f==='kijktip'){dt.style.display='none';sb.style.display='none';fb.style.display='none';updateSvcClearFloat();renderKijktip();}
+  else if(f==='search'){dt.style.display='none';sb.style.display='none';fb.style.display='none';updateSvcClearFloat();renderSearch();}
+  else if(f==='settings'){dt.style.display='none';sb.style.display='none';fb.style.display='none';updateSvcClearFloat();renderSettings();}
+  else if(f==='mylist'){dt.style.display='none';sb.style.display='none';fb.style.display='none';updateSvcClearFloat();renderMyList();}
+}
+
+/* ── MODAL with trailers, cast, similar ── */
+function openModal(rawId){
+  var overlay=document.getElementById('overlay');var si=document.getElementById('si');var sd=document.getElementById('sd');var wb=document.getElementById('wb');var shareBtn=document.getElementById('shareBtn');var ratingsRow=document.getElementById('ratingsRow');
+  var trailerWrap=document.getElementById('trailerWrap');var castRow=document.getElementById('castRow');var similarRow=document.getElementById('similarRow');var alsoOnRow=document.getElementById('alsoOnRow');
+  var item=allItems.find(function(i){return String(i.id)===String(rawId);});if(!item)return;currentModalItem=item;haptic('light');
+  var title=item.title,_src=item._src,_style=item._style,_type=item._type,_source=item._source,tmdb_id=item.tmdb_id;
+  var svcName=capitalizeProvider(_src&&_src.name||'Streaming');var color=_style&&_style.color||'#40e86a';var initPoster=imgCache[item.id]||item.img||'';
+  var spClass=_type==='live'?' sp-live':'';
+  si.innerHTML='<div class="sheet-header"><div class="sp'+spClass+'">'+(initPoster?'<img src="'+initPoster+'" alt="">':'')+'</div><div class="sinf"><div class="ssvc" style="color:'+color+'">'+svcName+'</div><div class="stitle">'+title+'</div><div class="smeta">'+(_type==='movie'?'Film':_type==='live'?'Live':'Serie')+' - laden...</div></div></div>';
+  sd.textContent=item.overview||'Beschrijving laden...';ratingsRow.style.display='none';ratingsRow.innerHTML='';wb.style.display='none';if(shareBtn)shareBtn.style.display='flex';
+  if(trailerWrap)trailerWrap.style.display='none';
+  if(castRow){castRow.style.display='none';castRow.innerHTML='';}
+  if(similarRow){similarRow.style.display='none';similarRow.innerHTML='';}
+  if(alsoOnRow){alsoOnRow.style.display='none';alsoOnRow.innerHTML='';}
+  overlay.classList.add('open');document.body.style.overflow='hidden';
+  var fullTitle=title,year='',runtime='',genres='',rawOverview=item.overview||'',watchLink=null,imdbId=null,seasonInfo=item._season?'Seizoen '+item._season:'',posterUrl=initPoster,tmdbRating=item.user_rating||0;
+  var resolvedTmdbId=tmdb_id||(_source==='tmdb'?String(rawId).replace(/tmdb-(\d+)-.*/,'$1'):null);
+  var chain=Promise.resolve();
+  if(resolvedTmdbId){chain=chain.then(function(){var cKey='tmdb-'+_type+'-'+resolvedTmdbId;if(detailCache[cKey])return detailCache[cKey];var path=_type==='movie'?'/movie/'+resolvedTmdbId:'/tv/'+resolvedTmdbId;return Promise.all([tmdb(path,{language:'nl-NL'}),tmdb(path+'/watch/providers'),tmdb(path+'/external_ids').catch(function(){return{};}),tmdb(path+'/videos',{language:'nl-NL'}).catch(function(){return{results:[]};}),tmdb(path+'/credits',{language:'nl-NL'}).catch(function(){return{cast:[]};}),tmdb(path+'/similar',{language:'nl-NL',page:1}).catch(function(){return{results:[]};})]).then(function(r){detailCache[cKey]={det:r[0],prov:r[1],extIds:r[2],videos:r[3],credits:r[4],similar:r[5]};return detailCache[cKey];}).catch(function(){detailCache[cKey]=null;return null;});}).then(function(cached){if(cached&&cached.det){var d=cached.det;fullTitle=d.title||d.name||title;year=(d.release_date||d.first_air_date||'').slice(0,4);runtime=d.runtime?d.runtime+' min':'';tmdbRating=d.vote_average||tmdbRating;genres=(d.genres||[]).slice(0,4).map(function(g){return '<span class="stag">'+g.name+'</span>';}).join('');if(d.overview)rawOverview=d.overview;if(_type==='tv'&&d.number_of_seasons)seasonInfo=d.number_of_seasons+' seizoen'+(d.number_of_seasons>1?'en':'');if(d.poster_path){posterUrl=TMDB_IMG+d.poster_path;imgCache[item.id]=posterUrl;item.img=posterUrl;}var nlProv=cached.prov&&cached.prov.results&&cached.prov.results.NL;if(nlProv&&nlProv.link)watchLink=nlProv.link;imdbId=cached.extIds&&cached.extIds.imdb_id||null;
+
+    /* ── Trailer ── */
+    if(cached.videos&&trailerWrap){
+      var vids=(cached.videos.results||[]);
+      /* Try NL trailer first, then EN */
+      var trailer=vids.find(function(v){return v.type==='Trailer'&&v.site==='YouTube';})||vids.find(function(v){return v.site==='YouTube';});
+      if(!trailer&&_type!=='live'){
+        /* Fetch EN videos as fallback */
+        tmdb((_type==='movie'?'/movie/':'/tv/')+resolvedTmdbId+'/videos',{language:'en-US'}).then(function(enVids){
+          var enTrailer=(enVids.results||[]).find(function(v){return v.type==='Trailer'&&v.site==='YouTube';});
+          if(enTrailer&&trailerWrap&&currentModalItem===item){
+            trailerWrap.innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+enTrailer.key+'?rel=0&modestbranding=1" allowfullscreen loading="lazy"></iframe>';
+            trailerWrap.style.display='block';
+          }
+        }).catch(function(){});
+      }
+      if(trailer){trailerWrap.innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+trailer.key+'?rel=0&modestbranding=1" allowfullscreen loading="lazy"></iframe>';trailerWrap.style.display='block';}
+    }
+
+    /* ── Cast ── */
+    if(cached.credits&&castRow){
+      var cast=(cached.credits.cast||[]).slice(0,10);
+      if(cast.length){
+        castRow.innerHTML='<div class="cast-row-title">Cast</div><div class="cast-scroll">'+cast.map(function(c){
+          var photo=c.profile_path?'https://image.tmdb.org/t/p/w185'+c.profile_path:'';
+          return '<div class="cast-item">'+(photo?'<img class="cast-photo" src="'+photo+'" alt="'+c.name+'" loading="lazy">':'<div class="cast-photo"></div>')+'<div class="cast-name">'+c.name+'</div><div class="cast-char">'+(c.character||'')+'</div></div>';
+        }).join('')+'</div>';
+        castRow.style.display='block';
+      }
+    }
+
+    /* ── Similar titles ── */
+    if(cached.similar&&similarRow){
+      var sims=(cached.similar.results||[]).filter(function(s){return s.poster_path;}).slice(0,8);
+      if(sims.length){
+        similarRow.innerHTML='<div class="similar-row-title">Vergelijkbaar</div><div class="similar-scroll">'+sims.map(function(s){
+          var sPoster='https://image.tmdb.org/t/p/w185'+s.poster_path;
+          var sTitle=(s.title||s.name||'').replace(/'/g,"&#39;");
+          var sMt=s.title?'movie':'tv';
+          return '<div class="similar-item" data-tmdb="'+s.id+'" data-mt="'+sMt+'" data-title="'+sTitle+'"><img class="similar-poster" src="'+sPoster+'" alt="'+sTitle+'" loading="lazy"><div class="similar-name">'+sTitle+'</div></div>';
+        }).join('')+'</div>';
+        similarRow.style.display='block';
+        similarRow.querySelectorAll('.similar-item').forEach(function(el){el.addEventListener('click',function(){closeModal();setTimeout(function(){openTop10Modal(el.getAttribute('data-tmdb'),el.getAttribute('data-mt'),el.getAttribute('data-title'));},300);});});
+      }
+    }
+  }});}
+
+  chain.then(function(){
+    if(!watchLink){var svc=(_src&&_src.name||'').toLowerCase();if(svc.includes('netflix'))watchLink='https://www.netflix.com/search?q='+encodeURIComponent(fullTitle);else if(svc.includes('prime'))watchLink='https://www.amazon.nl/s?k='+encodeURIComponent(fullTitle);else if(svc.includes('disney'))watchLink='https://www.disneyplus.com/search/'+encodeURIComponent(fullTitle);else if(svc.includes('apple'))watchLink='https://tv.apple.com/';else if(svc.includes('max'))watchLink='https://www.max.com/';else if(svc.includes('sky'))watchLink='https://www.skyshowtime.com/';else if(svc.includes('videoland'))watchLink='https://www.videoland.com/';else if(svc.includes('path'))watchLink='https://www.pathe-thuis.nl/';else if(svc.includes('npo'))watchLink='https://npo.nl/';else if(svc.includes('paramount'))watchLink='https://www.paramountplus.com/nl/';else if(svc.includes('discovery'))watchLink='https://www.discoveryplus.com/nl/';}
+    var mp=[_type==='movie'?'Film':_type==='live'?'Live':'Serie'];if(year)mp.push(year);if(runtime)mp.push(runtime);if(_type==='tv'&&seasonInfo)mp.push(seasonInfo);
+    if(_type==='live'){if(item._sportSub)mp.push(item._sportSub);if(item._sportTime)mp.push(item._sportTime);}
+    var spClass2=_type==='live'?' sp-live':'';
+    si.innerHTML='<div class="sheet-header"><div class="sp'+spClass2+'">'+(posterUrl?'<img src="'+posterUrl+'" alt="">':'')+'</div><div class="sinf"><div class="ssvc" style="color:'+color+'">'+svcName+'</div><div class="stitle">'+fullTitle+'</div><div class="smeta">'+mp.join(' - ')+'</div><div class="stags">'+genres+'</div></div></div>';
+    sd.textContent=rawOverview||'Geen beschrijving beschikbaar.';
+    if(rawOverview&&/^[A-Za-z\s]{20,}/.test(rawOverview.slice(0,60))){translateToNL(rawOverview).then(function(txt){if(currentModalItem===item&&txt&&txt!==rawOverview)sd.textContent=txt;});}
+
+    /* Also available on logos in modal */
+    if(item._alsoOn&&item._alsoOn.length>0&&alsoOnRow){
+      var aoHtml='<span class="also-on-label">Ook op:</span>';
+      item._alsoOn.forEach(function(name){var pk=providerKey(name);var logo=canonicalProviderLogo(pk);if(logo)aoHtml+='<img class="also-on-logo" src="'+logo+'" alt="'+name+'" title="'+name+'">';else aoHtml+='<span class="also-on-label">'+name+'</span>';});
+      alsoOnRow.innerHTML=aoHtml;alsoOnRow.style.display='flex';
+    }
+
+    if(item._type!=='live'){var chips=[];var imdbUrl=imdbId?'https://www.imdb.com/title/'+imdbId+'/':'https://www.imdb.com/find/?q='+encodeURIComponent(fullTitle)+'&s=tt';chips.push('<a class="rating-chip imdb" href="'+imdbUrl+'" target="_blank" rel="noopener"><span class="chip-logo">IMDb</span>Bekijk in IMDb</a>');chips.push('<a class="rating-chip rt" href="https://www.rottentomatoes.com/search?search='+encodeURIComponent(fullTitle)+'" target="_blank" rel="noopener"><span class="chip-logo">RT</span>Bekijk in RT</a>');ratingsRow.innerHTML=chips.join('');ratingsRow.style.display='flex';}
+    if(!watchLink&&_type==='live'){var svc2=(_src&&_src.name||'').toLowerCase();if(svc2.includes('viaplay'))watchLink='https://www.viaplay.nl/';else if(svc2.includes('discovery'))watchLink='https://www.discoveryplus.com/nl/';else if(svc2.includes('netflix'))watchLink='https://www.netflix.com/';else if(svc2.includes('prime'))watchLink='https://www.amazon.nl/';else if(svc2.includes('disney'))watchLink='https://www.disneyplus.com/';else if(svc2.includes('max'))watchLink='https://www.max.com/';else if(svc2.includes('sky'))watchLink='https://www.skyshowtime.com/';else if(svc2.includes('npo'))watchLink='https://npo.nl/';else if(svc2.includes('paramount'))watchLink='https://www.paramountplus.com/nl/';}
+    if(watchLink){wb.href=watchLink;wb.style.display='flex';var wbLogo=document.getElementById('wbLogo');var wbLabel=document.getElementById('wbLabel');var pLogo=canonicalProviderLogo(item._key)||item._src&&item._src.logo_100px||null;if(!pLogo){var pKey=(item._key||'').toLowerCase();Object.keys(TMDB_NL_PROVIDERS).forEach(function(pid){var pr=TMDB_NL_PROVIDERS[pid];if(pr&&pr.name&&providerKey(pr.name)===pKey&&pr.logo)pLogo=pr.logo;});}if(pLogo&&wbLogo){wbLogo.src=pLogo;wbLogo.alt=svcName;wbLogo.style.display='block';}else if(wbLogo){wbLogo.style.display='none';}if(wbLabel)wbLabel.textContent='Kijken op '+svcName;}
+    updateActionBtns();
+  });
+}
+function updateActionBtns(){var followBtn=document.getElementById('followBtn');var followLbl=document.getElementById('followBtnLabel');var myListBtn=document.getElementById('myListBtn');var myListLbl=document.getElementById('myListBtnLabel');if(!currentModalItem){if(followBtn)followBtn.style.display='none';if(myListBtn)myListBtn.style.display='none';return;}if(followBtn)followBtn.style.display='flex';if(myListBtn)myListBtn.style.display='flex';var fol=isFollowing(currentModalItem.id);if(followLbl)followLbl.textContent=fol?'Gevolgd':'Volgen';if(followBtn)followBtn.classList.toggle('is-active',fol);var inList=isInMyList(currentModalItem.id);if(myListLbl)myListLbl.textContent=inList?'In mijn lijst':'Mijn lijst';if(myListBtn)myListBtn.classList.toggle('is-active',inList);}
+function closeModal(){haptic('light');document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentModalItem=null;var tw=document.getElementById('trailerWrap');if(tw){tw.innerHTML='';tw.style.display='none';}}
+
+
+/* ── MY LIST ── */
+function renderMyList(){document.querySelectorAll('.bnav').forEach(function(n){n.classList.toggle('active',n.getAttribute('data-f')==='mylist');});var dt=document.getElementById('dateTabs');var sb=document.getElementById('svcBar');var fb=document.getElementById('filterBar');if(dt)dt.style.display='none';if(sb)sb.style.display='none';if(fb)fb.style.display='none';var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='settings-section';var html='<div class="set-title">Mijn lijst</div>';if(!myList.length){html+='<div class="kt-empty" style="padding:40px 20px"><div class="kt-empty-title">Lijst is leeg</div><div class="kt-empty-sub">Voeg toe via het + knopje bij de film, serie of live event.</div></div>';}else{html+='<div class="fav-list">'+myList.map(function(f){var poster=f.img||'';var tl=f._type==='movie'?'Film':f._type==='live'?'Live':'Serie';var sn=capitalizeProvider(f._src&&f._src.name||'');return '<div class="crow fav-crow" data-id="'+f.id+'"><div class="crow-poster">'+(poster?'<img src="'+poster+'" alt="" loading="lazy">':'<div class="crow-fb">'+f.title+'</div>')+'</div><div class="crow-info"><div class="crow-title">'+f.title+'</div><div class="crow-meta">'+tl+(sn?' · '+sn:'')+'</div></div><button class="mylist-remove-btn" data-id="'+f.id+'" aria-label="Verwijder">✕</button></div>';}).join('')+'</div>';}sec.innerHTML=html;main.appendChild(sec);sec.querySelectorAll('.fav-crow').forEach(function(row){row.addEventListener('click',function(e){if(e.target.closest('.mylist-remove-btn'))return;openModal(row.getAttribute('data-id'));});});sec.querySelectorAll('.mylist-remove-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();removeFromMyList(btn.getAttribute('data-id'));renderMyList();showToast('Verwijderd uit lijst');});});}
+
+/* ── TOP 10 ── */
+var top10Period='week',top10Category='all',top10Cache={};
+function fetchTop10(p,c){var ck='t10_'+p+'_'+c;if(top10Cache[ck])return Promise.resolve(top10Cache[ck]);var ep=c==='all'?'/trending/all/'+p:'/trending/'+c+'/'+p;return Promise.all([tmdb(ep,{language:'nl-NL',region:'NL',page:1}).catch(function(){return{results:[]};}),tmdb(ep,{language:'nl-NL',region:'NL',page:2}).catch(function(){return{results:[]};}),tmdb(ep,{language:'nl-NL',region:'NL',page:3}).catch(function(){return{results:[]};})]).then(function(pages){var r=[];pages.forEach(function(d){r=r.concat(d.results||[]);});var seen={};r=r.filter(function(x){if(seen[x.id])return false;seen[x.id]=true;return true;});top10Cache[ck]=r.slice(0,60);return top10Cache[ck];});}
+function renderTop10(){var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='top10-section';sec.innerHTML='<div class="top10-title">Top 10 trending deze week</div><div class="top10-sub">Meest bekeken op streaming in Nederland</div><div class="t10-tabs" id="t10tabs"></div><div id="t10list" class="t10-list"><div class="t10-loading"><div class="ld-spinner" style="margin:0 auto 8px"></div>Laden...</div></div>';main.appendChild(sec);renderT10Tabs();fetchTop10(top10Period,top10Category).then(function(items){var el=document.getElementById('t10list');if(!el)return;if(!items.length){el.innerHTML='<div class="t10-loading">Geen data.</div>';return;}var checks=items.map(function(item){var isTV=item.media_type==='tv'||(!item.title&&item.name);var type=isTV?'tv':'movie';return tmdb('/'+type+'/'+item.id+'/watch/providers').then(function(pd){var nlFlat=pd&&pd.results&&pd.results.NL&&pd.results.NL.flatrate||[];item._nlProviders=nlFlat;item._hasNLStream=nlFlat.length>0;item._streamerLabel='';for(var i=0;i<nlFlat.length;i++){var m=matchProvider(nlFlat[i].provider_name);if(m){item._streamerLabel=m.name;break;}}if(!item._streamerLabel&&nlFlat.length>0)item._streamerLabel=nlFlat[0].provider_name||'';}).catch(function(){item._nlProviders=[];item._hasNLStream=false;item._streamerLabel='';});});Promise.all(checks).then(function(){var streamable=items.filter(function(item){return item._hasNLStream;}).slice(0,10);if(!streamable.length){el.innerHTML='<div class="sp-empty">Geen streambare content gevonden.</div>';return;}el.innerHTML=streamable.map(function(item,idx){var rank=idx+1;var isTV=item.media_type==='tv'||(!item.title&&item.name);var title=item.title||item.name||'?';var poster=item.poster_path?TMDB_IMG+item.poster_path:'';var year=(item.release_date||item.first_air_date||'').slice(0,4);var score=item.vote_average?Number(item.vote_average).toFixed(1):'';var tl=isTV?'Serie':'Film';var rc=rank<=3?'r'+rank:'';var safe=title.replace(/'/g,"&#39;");var mt=item.media_type||(isTV?'tv':'movie');var streamerHtml=item._streamerLabel?'<span class="t10-streamer">'+item._streamerLabel+'</span>':'';return '<div class="t10-item" data-tmdb="'+item.id+'" data-mt="'+mt+'" data-title="'+safe+'"><div class="t10-rank '+rc+'">'+rank+'</div><div class="t10-poster">'+(poster?'<img src="'+poster+'" alt="'+safe+'" loading="lazy">':'')+'</div><div class="t10-info"><div class="t10-name">'+title+'<span class="t10-badge">'+tl+'</span></div><div class="t10-meta">'+year+streamerHtml+'</div></div>'+(score?'<div class="t10-score">'+score+'</div>':'')+'</div>';}).join('');});});}
+function renderT10Tabs(){var c=document.getElementById('t10tabs');if(!c)return;c.innerHTML=['all','movie','tv'].map(function(cat){return '<button class="t10-tab'+(top10Category===cat?' active':'')+'" data-c="'+cat+'">'+(cat==='all'?'Alles':cat==='movie'?'Films':'Series')+'</button>';}).join('');}
+function openTop10Modal(tmdbId,mt,title){var existing=allItems.find(function(i){return String(i.tmdb_id)===String(tmdbId);});if(existing){openModal(existing.id);return;}var fi={id:'t10-'+tmdbId,title:title,img:null,_type:mt==='tv'?'tv':'movie',_date:'',_src:{name:'Streaming'},_style:{color:'#40e86a',text:'#fff'},_key:'streaming',_originType:'licensed',_source:'tmdb',tmdb_id:tmdbId,overview:'',user_rating:0,_genres:[]};allItems.push(fi);openModal('t10-'+tmdbId);}
+
+/* ── LIVE SPORT ── */
+var FD_KEY='a5121338cb264baaa294099596feaf92';var FD_BASE='https://api.football-data.org/v4';
+var FOOTBALL_COMPS=[{code:'CL',name:'Champions League',streamer:'Viaplay'},{code:'PL',name:'Premier League',streamer:'Viaplay'},{code:'PD',name:'La Liga',streamer:'Viaplay'}];
+var SPORT_STREAMERS={Viaplay:{bg:'rgba(123,79,227,0.85)'},'Discovery+':{bg:'rgba(0,54,160,0.85)'},Netflix:{bg:'rgba(229,9,20,0.85)'},'Prime Video':{bg:'rgba(0,168,224,0.85)'}};
+var sportFilter='today',sportCache=null,sportFetchErrors=[];
+var CORS_PROXIES=[function(u){return 'https://corsproxy.io/?url='+encodeURIComponent(u);},function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);}];
+function fd(path,params){params=params||{};var url=new URL(FD_BASE+path);Object.keys(params).forEach(function(k){url.searchParams.set(k,params[k]);});var raw=url.toString(),ck='fd4_'+raw,c=scGet(ck);if(c)return Promise.resolve(c);var idx=0;function tryP(){if(idx>=CORS_PROXIES.length)return Promise.reject(new Error('niet bereikbaar'));var pUrl=CORS_PROXIES[idx++](raw);return fetch(pUrl,{headers:{'X-Auth-Token':FD_KEY,'Accept':'application/json'}}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();}).then(function(t){var d=JSON.parse(t);scSet(ck,d);return d;}).catch(function(){return tryP();});}return tryP();}
+function getSportLogo(sport,subtitle){var key=subtitle||sport||'';if(SPORT_LOGOS[key])return SPORT_LOGOS[key];var lk=key.toLowerCase();var keys=Object.keys(SPORT_LOGOS);for(var i=0;i<keys.length;i++){if(lk.indexOf(keys[i].toLowerCase())!==-1)return SPORT_LOGOS[keys[i]];}if(SPORT_LOGOS[sport])return SPORT_LOGOS[sport];return '';}
+function fetchSportSheet(){if(!GOOGLE_SHEET_SPORT_URL)return Promise.resolve([]);var ck='gsport_'+GOOGLE_SHEET_SPORT_URL;var c=scGet(ck);if(c)return Promise.resolve(c);return fetch(GOOGLE_SHEET_SPORT_URL).then(function(r){if(!r.ok)throw new Error('Sport Sheet HTTP '+r.status);return r.text();}).then(function(csv){var lines=csv.split('\n');if(lines.length<2)return[];var hdr=lines[0].split(',').map(function(h){return h.trim().toLowerCase().replace(/['"]/g,'');});var ci={titel:hdr.indexOf('titel'),datum:hdr.indexOf('datum'),tijd:hdr.indexOf('tijd'),sport:hdr.indexOf('sport'),streamer:hdr.indexOf('streamer')};if(ci.titel===-1)ci.titel=0;if(ci.datum===-1)ci.datum=1;if(ci.tijd===-1)ci.tijd=2;if(ci.sport===-1)ci.sport=3;if(ci.streamer===-1)ci.streamer=4;var items=[];for(var i=1;i<lines.length;i++){var line=lines[i].trim();if(!line)continue;var cols=[];var cur='',inQ=false;for(var j=0;j<line.length;j++){var ch=line[j];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else{cur+=ch;}}cols.push(cur.trim());var titel=(cols[ci.titel]||'').replace(/^["']|["']$/g,'').trim();var datum=(cols[ci.datum]||'').replace(/^["']|["']$/g,'').trim();var tijd=(cols[ci.tijd]||'').replace(/^["']|["']$/g,'').trim()||'00:00';var sport=(cols[ci.sport]||'').replace(/^["']|["']$/g,'').trim();var streamer=(cols[ci.streamer]||'').replace(/^["']|["']$/g,'').trim();if(!titel||!datum)continue;var dateStr2=datum+'T'+(tijd.length<=5?tijd+':00':tijd);var d=new Date(dateStr2);if(isNaN(d.getTime()))continue;if(streamer&&!SPORT_STREAMERS[streamer]){var mp=matchProvider(streamer);if(mp)SPORT_STREAMERS[streamer]={bg:mp.color};else SPORT_STREAMERS[streamer]={bg:'rgba(100,100,100,0.85)'};}items.push({id:'gs-sport-'+i+'-'+titel.replace(/\s/g,'-').slice(0,20),title:titel,subtitle:sport||'Live Event',sport:sport||'Live Event',streamer:streamer||'Streaming',date:d,venue:'',isLive:false});}scSet(ck,items);return items;}).catch(function(e){console.warn('[StreamGids] Sport Sheet fout:',e);return[];});}
+function fetchSportEvents(){if(sportCache)return Promise.resolve(sportCache);var events=[],seenIds={},now=new Date();sportFetchErrors=[];var dateFrom=new Date(now.getTime()-86400000).toISOString().slice(0,10);var dateTo=new Date(now.getTime()+45*86400000).toISOString().slice(0,10);function add(ev){if(seenIds[ev.id])return;seenIds[ev.id]=true;events.push(ev);}var ffs=FOOTBALL_COMPS.map(function(comp){return fd('/competitions/'+comp.code+'/matches',{dateFrom:dateFrom,dateTo:dateTo}).then(function(data){(data.matches||[]).forEach(function(m){if(!m.utcDate)return;if(['FINISHED','AWARDED','CANCELLED','POSTPONED','SUSPENDED'].indexOf(m.status)!==-1)return;var d=new Date(m.utcDate);if(isNaN(d.getTime()))return;var home=m.homeTeam&&(m.homeTeam.shortName||m.homeTeam.name)||'?';var away=m.awayTeam&&(m.awayTeam.shortName||m.awayTeam.name)||'?';var live=['IN_PLAY','PAUSED','LIVE'].indexOf(m.status)!==-1;add({id:'fd-'+m.id,title:home+' - '+away,subtitle:comp.name,sport:'Voetbal',streamer:comp.streamer,date:d,venue:'',isLive:live});});}).catch(function(e){sportFetchErrors.push(comp.name+': '+e.message);});});var f1F=function(){var ck='jolpica_f1_2025';var d=scGet(ck);var p=d?Promise.resolve(d):fetch('https://api.jolpi.ca/ergast/f1/2025/').then(function(r){if(r.ok)return r.json();throw 0;}).catch(function(){return fetch('https://ergast.com/api/f1/2025.json').then(function(r){return r.json();});}).then(function(data){scSet(ck,data);return data;}).catch(function(){return null;});return p.then(function(data){if(!data)return;(data.MRData&&data.MRData.RaceTable&&data.MRData.RaceTable.Races||[]).forEach(function(race){var rd=new Date(race.date+'T'+(race.time||'13:00:00'));if(rd<new Date(now.getTime()-3600000)||rd>new Date(now.getTime()+45*86400000))return;var loc=(race.Circuit&&race.Circuit.Location)?race.Circuit.Location.locality+', '+race.Circuit.Location.country:'';add({id:'f1-'+race.season+'-'+race.round,title:race.raceName,subtitle:'Formule 1',sport:'F1',streamer:'Viaplay',date:rd,venue:loc,isLive:false});});});};var gsF=fetchSportSheet().then(function(gsEvents){(gsEvents||[]).forEach(function(ev){if(ev.date<new Date(now.getTime()-86400000))return;if(ev.date>new Date(now.getTime()+45*86400000))return;add(ev);});});return Promise.all(ffs.concat([f1F(),gsF])).catch(function(){}).then(function(){events.sort(function(a,b){if(a.isLive&&!b.isLive)return -1;if(!a.isLive&&b.isLive)return 1;return a.date-b.date;});sportCache=events.slice(0,80);return sportCache;});}
+function formatSportDate(d){var tz='Europe/Amsterdam';var now=new Date();var todayAMS=now.toLocaleDateString('nl-NL',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'});var eventAMS=d.toLocaleDateString('nl-NL',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'});var tm=d.toLocaleTimeString('nl-NL',{timeZone:tz,hour:'2-digit',minute:'2-digit'});if(eventAMS===todayAMS)return 'Vandaag '+tm;var diff=Math.round((d-now)/86400000);if(diff===1)return 'Morgen '+tm;if(diff>=0&&diff<7)return d.toLocaleDateString('nl-NL',{timeZone:tz,weekday:'long'})+' '+tm;return d.toLocaleDateString('nl-NL',{timeZone:tz,day:'numeric',month:'short'})+' '+tm;}
+function renderLiveSport(){var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='sport-section';sec.innerHTML='<div class="sport-hdr"><div class="sport-dot-live"></div><div class="sport-hdr-title">Live Sport & Events</div></div><div class="sport-sub">Aankomende live sport en evenementen op NL streaming</div><div class="sp-tabs" id="sptabs"></div><div id="splist" class="sp-list"><div class="t10-loading"><div class="ld-spinner" style="margin:0 auto 8px"></div>Laden...</div></div><div class="sp-disclaimer">Voetbal via football-data.org · F1 via Jolpica API · Overige events via Google Sheet</div>';main.appendChild(sec);renderSpTabs();fetchSportEvents().then(function(evs){renderSportList(evs);});}
+function renderSpTabs(){var c=document.getElementById('sptabs');if(!c)return;c.innerHTML=['all','today','week'].map(function(f){var labels={all:'Alles',today:'Vandaag',week:'Deze week'};return '<button class="sp-tab'+(sportFilter===f?' active':'')+'" data-sf="'+f+'">'+labels[f]+'</button>';}).join('');}
+function renderSportList(evs){var el=document.getElementById('splist');if(!el)return;var now=new Date(),ts=now.toISOString().slice(0,10),we=new Date(now.getTime()+7*86400000);var filtered=evs;if(sportFilter==='today')filtered=evs.filter(function(e){return e.isLive||e.date.toISOString().slice(0,10)===ts;});if(sportFilter==='week')filtered=evs.filter(function(e){return e.isLive||(e.date>=now&&e.date<=we);});if(!filtered.length){el.innerHTML='<div class="sp-empty">Geen evenementen gevonden.</div>';return;}el.innerHTML=filtered.map(function(ev){var info=SPORT_STREAMERS[ev.streamer]||{bg:'rgba(100,100,100,0.85)'};var tm=ev.isLive?'':formatSportDate(ev.date);var right=ev.isLive?'<div class="sp-live-badge">LIVE</div>':'<div class="sp-time">'+tm+'</div>';var logo=getSportLogo(ev.sport,ev.subtitle);var iconHtml=logo?'<img src="'+logo+'" alt="" style="width:28px;height:28px;object-fit:contain" onerror="this.parentElement.textContent=\'\'">':'';return '<div class="sp-ev'+(ev.isLive?' live':'')+'"><div class="sp-icon">'+iconHtml+'</div><div class="sp-info"><div class="sp-title">'+ev.title+'</div><div class="sp-meta">'+ev.subtitle+(ev.venue?' · '+ev.venue:'')+'</div></div><div class="sp-right">'+right+'<div class="sp-streamer" style="background:'+info.bg+';color:#fff">'+ev.streamer+'</div></div></div>';}).join('');}
+
+/* ── SEARCH ── */
+var searchTimeout=null;
+function renderSearch(){var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='search-section';sec.innerHTML='<div class="search-input-wrap"><svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" id="searchInput" type="text" placeholder="Zoek een film of serie..." autocomplete="off" autofocus></div><div id="searchResults" class="search-results"><div class="search-hint">Wil je weten of een film of serie te streamen is? Zoek nu!</div></div>';main.appendChild(sec);var inp=document.getElementById('searchInput');if(inp){inp.focus();inp.addEventListener('input',function(){clearTimeout(searchTimeout);var q=inp.value.trim();if(q.length<2){document.getElementById('searchResults').innerHTML='<div class="search-hint">Typ de naam van een film of serie om te zoeken.</div>';return;}searchTimeout=setTimeout(function(){doSearch(q);},350);});}}
+function doSearch(q){var el=document.getElementById('searchResults');if(!el)return;el.innerHTML='<div class="search-hint">Zoeken naar "'+q+'"...</div>';var ql=q.toLowerCase();var localHits=allItems.filter(function(i){return i.title&&i.title.toLowerCase().indexOf(ql)!==-1&&i._key!=='search';});var seen={};var deduped=[];localHits.forEach(function(i){var k=(i.title||'').toLowerCase()+'|'+i._type;if(seen[k])return;seen[k]=true;deduped.push(i);});Promise.all([tmdb('/search/movie',{query:q,language:'nl-NL',region:'NL'}).catch(function(){return{results:[]};}),tmdb('/search/tv',{query:q,language:'nl-NL',region:'NL'}).catch(function(){return{results:[]};})]).then(function(res){var tmdbRaw=[];(res[0].results||[]).slice(0,10).forEach(function(m){var k=(m.title||m.name||'').toLowerCase()+'|movie';if(!seen[k]){seen[k]=true;tmdbRaw.push({raw:m,type:'movie'});}});(res[1].results||[]).slice(0,10).forEach(function(t){var k=(t.name||t.title||'').toLowerCase()+'|tv';if(!seen[k]){seen[k]=true;tmdbRaw.push({raw:t,type:'tv'});}});return Promise.all(tmdbRaw.map(function(entry){return tmdb('/'+entry.type+'/'+entry.raw.id+'/watch/providers').then(function(pd){var nlFlat=pd&&pd.results&&pd.results.NL&&pd.results.NL.flatrate||[];var nlLink=pd&&pd.results&&pd.results.NL&&pd.results.NL.link||null;var streamer='';var sColor='#40e86a';for(var i=0;i<nlFlat.length;i++){var mp2=matchProvider(nlFlat[i].provider_name);if(mp2){streamer=mp2.name;sColor=mp2.color;break;}}if(!streamer&&nlFlat.length>0)streamer=nlFlat[0].provider_name||'';var m=entry.raw;entry.item={id:'search-'+entry.type.charAt(0)+'-'+m.id,title:m.title||m.name||'',img:m.poster_path?TMDB_IMG+m.poster_path:null,_type:entry.type,_date:(entry.type==='movie'?m.release_date:m.first_air_date)||'',_src:{name:streamer||'Niet beschikbaar',logo_100px:nlFlat.length>0&&nlFlat[0].logo_path?'https://image.tmdb.org/t/p/original'+nlFlat[0].logo_path:null},_style:{color:sColor,text:'#fff'},_key:streamer?providerKey(streamer):'search',_originType:streamer?detectOrigin(streamer):'licensed',_source:'tmdb',tmdb_id:m.id,overview:m.overview||'',user_rating:m.vote_average||0,_voteCount:m.vote_count||0,_popularity:m.popularity||0,_nlWatchLink:nlLink,_genres:m.genre_ids||[]};}).catch(function(){var m=entry.raw;entry.item={id:'search-'+entry.type.charAt(0)+'-'+m.id,title:m.title||m.name||'',img:m.poster_path?TMDB_IMG+m.poster_path:null,_type:entry.type,_date:(entry.type==='movie'?m.release_date:m.first_air_date)||'',_src:{name:'Onbekend'},_style:{color:'#666',text:'#fff'},_key:'search',_originType:'licensed',_source:'tmdb',tmdb_id:m.id,overview:m.overview||'',user_rating:m.vote_average||0,_voteCount:m.vote_count||0,_popularity:m.popularity||0,_genres:m.genre_ids||[]};});})).then(function(){return tmdbRaw;});}).then(function(tmdbRaw){var tmdbHits=tmdbRaw.map(function(e){return e.item;}).filter(Boolean);tmdbHits.forEach(function(h){if(!allItems.find(function(i){return i.id===h.id;}))allItems.push(h);});var combined=deduped.concat(tmdbHits).filter(function(item){return imgCache[item.id]||item.img;});combined.sort(function(a,b){var aTl=(a.title||'').toLowerCase(),bTl=(b.title||'').toLowerCase();var aExact=aTl===ql?2:(aTl.indexOf(ql)===0?1:0);var bExact=bTl===ql?2:(bTl.indexOf(ql)===0?1:0);if(aExact!==bExact)return bExact-aExact;var aAvail=a._key&&a._key!=='search'?1:0;var bAvail=b._key&&b._key!=='search'?1:0;if(aAvail!==bAvail)return bAvail-aAvail;var aVotes=a._voteCount||0,bVotes=b._voteCount||0;if(aVotes!==bVotes)return bVotes-aVotes;return(b.user_rating||0)-(a.user_rating||0);});combined=combined.slice(0,15);if(!combined.length){el.innerHTML='<div class="search-empty">Geen resultaten voor "'+q+'".</div>';return;}el.innerHTML=combined.map(function(item){var title=(item.title||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');var sid=String(item.id).replace(/['"\\]/g,'');var poster=imgCache[item.id]||item.img||'';var tl=item._type==='movie'?'Film':'Serie';var cls=item._type==='movie'?'film':'serie';var year=(item._date||'').slice(0,4);var sn=capitalizeProvider(item._src&&item._src.name||'');var isAvailable=sn&&sn!=='Niet beschikbaar'&&sn!=='Onbekend';var streamerBadge=isAvailable?'<span class="t10-streamer" style="font-size:10px">'+sn+'</span>':'<span class="t10-badge" style="font-size:10px;background:var(--brd2);color:var(--t3)">Niet op streaming</span>';return '<div class="crow" data-id="'+sid+'"><div class="crow-poster">'+(poster?'<img src="'+poster+'" alt="'+title+'" loading="lazy">':'<div class="crow-fb">'+title+'</div>')+'</div><div class="crow-info"><div class="crow-title">'+title+'</div><div class="crow-meta">'+(tl+(year?' - '+year:''))+' '+streamerBadge+'</div></div><div class="crow-badge '+cls+'">'+tl+'</div></div>';}).join('');});}
+
+
+/* ══════════════════════════════════════════════════════════
+   KIJKTIP (with detail button)
+   ══════════════════════════════════════════════════════════ */
+var kijktipCache=null;var kijktipAllTips=null;var kijktipSelectedWeek=null;
+function getISOWeek(dateStr2){var d=new Date(dateStr2+'T12:00:00');if(isNaN(d.getTime()))return null;d.setHours(0,0,0,0);d.setDate(d.getDate()+3-(d.getDay()+6)%7);var week1=new Date(d.getFullYear(),0,4);var weekNum=1+Math.round(((d.getTime()-week1.getTime())/86400000-3+(week1.getDay()+6)%7)/7);return{year:d.getFullYear(),week:weekNum};}
+function getCurrentISOWeek(){var now=new Date();var d=new Date(now.toLocaleDateString('en-CA',{timeZone:'Europe/Amsterdam'}));d.setHours(0,0,0,0);d.setDate(d.getDate()+3-(d.getDay()+6)%7);var week1=new Date(d.getFullYear(),0,4);var weekNum=1+Math.round(((d.getTime()-week1.getTime())/86400000-3+(week1.getDay()+6)%7)/7);return{year:d.getFullYear(),week:weekNum};}
+function fetchAllKijktips(){if(kijktipAllTips)return Promise.resolve(kijktipAllTips);if(!GOOGLE_SHEET_KIJKTIP_URL)return Promise.resolve([]);return fetch(GOOGLE_SHEET_KIJKTIP_URL).then(function(r){return r.text();}).then(function(csv){var lines=[];var cur='',inQ=false;for(var c=0;c<csv.length;c++){var ch=csv[c];if(ch==='"')inQ=!inQ;else if((ch==='\n'||ch==='\r')&&!inQ){if(cur.trim())lines.push(cur);cur='';continue;}cur+=ch;}if(cur.trim())lines.push(cur);if(lines.length<2)return[];var hdr=lines[0].split(',').map(function(h){return h.trim().toLowerCase().replace(/['"]/g,'');});var ci={titel:hdr.indexOf('titel'),tmdb_id:hdr.indexOf('tmdb_id'),type:hdr.indexOf('type'),tekst:hdr.indexOf('tekst'),datum:hdr.indexOf('datum')};var tips=[];for(var i=1;i<lines.length;i++){var line=lines[i].trim();if(!line)continue;var cols=[];var cur2='',inQ2=false;for(var j=0;j<line.length;j++){var ch2=line[j];if(ch2==='"'){inQ2=!inQ2;}else if(ch2===','&&!inQ2){cols.push(cur2.trim());cur2='';}else{cur2+=ch2;}}cols.push(cur2.trim());var titel=(cols[ci.titel>=0?ci.titel:0]||'').replace(/^["']|["']$/g,'').trim();if(!titel)continue;var datum=(ci.datum>=0?cols[ci.datum]:'').replace(/^["']|["']$/g,'').trim();var wk=datum?getISOWeek(datum):null;tips.push({titel:titel,tmdb_id:(ci.tmdb_id>=0?cols[ci.tmdb_id]:'').replace(/^["']|["']$/g,'').trim(),type:(ci.type>=0?cols[ci.type]:'movie').replace(/^["']|["']$/g,'').trim().toLowerCase(),tekst:(ci.tekst>=0?cols[ci.tekst]:'').replace(/^["']|["']$/g,'').trim(),datum:datum,_week:wk});}tips.sort(function(a,b){return(b.datum||'').localeCompare(a.datum||'');});kijktipAllTips=tips;return tips;}).catch(function(){return[];});}
+function getKijktipWeeks(tips){var weekMap={};tips.forEach(function(t){if(!t._week)return;var key=t._week.year+'-'+String(t._week.week).padStart(2,'0');if(!weekMap[key])weekMap[key]={year:t._week.year,week:t._week.week,key:key,tips:[]};weekMap[key].tips.push(t);});var weeks=Object.keys(weekMap).map(function(k){return weekMap[k];});weeks.sort(function(a,b){return b.key.localeCompare(a.key);});return weeks.slice(0,10);}
+function renderKijktip(){var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='kijktip-section';sec.innerHTML='<div class="kt-hdr"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><div class="kt-title">Kijktip van de week</div></div><div class="kt-week-nav" id="ktWeekNav"></div><div id="ktContent" class="kt-content"><div class="t10-loading">Laden...</div></div>';main.appendChild(sec);if(!GOOGLE_SHEET_KIJKTIP_URL){document.getElementById('ktContent').innerHTML='<div class="kt-empty"><div class="kt-empty-title">Binnenkort beschikbaar</div><div class="kt-empty-sub">Elke week een nieuwe kijktip met een persoonlijke aanbeveling.</div></div>';return;}fetchAllKijktips().then(function(tips){if(!tips||!tips.length){document.getElementById('ktWeekNav').innerHTML='';document.getElementById('ktContent').innerHTML='<div class="kt-empty"><div class="kt-empty-title">Nog geen kijktips</div><div class="kt-empty-sub">Binnenkort verschijnen hier aanbevelingen.</div></div>';return;}var weeks=getKijktipWeeks(tips);if(!weeks.length){kijktipSelectedWeek=null;document.getElementById('ktWeekNav').innerHTML='';renderKijktipContent(tips[0]);return;}if(!kijktipSelectedWeek)kijktipSelectedWeek=weeks[0].key;var validKeys=weeks.map(function(w){return w.key;});if(validKeys.indexOf(kijktipSelectedWeek)===-1)kijktipSelectedWeek=weeks[0].key;renderKijktipWeekNav(weeks);var selectedWeek=weeks.find(function(w){return w.key===kijktipSelectedWeek;});if(selectedWeek&&selectedWeek.tips.length){renderKijktipContent(selectedWeek.tips[0]);}});}
+function renderKijktipWeekNav(weeks){var nav=document.getElementById('ktWeekNav');if(!nav)return;nav.innerHTML=weeks.map(function(w){var label='Week '+w.week;var isActive=w.key===kijktipSelectedWeek;return '<button class="kt-week-tab'+(isActive?' active':'')+'" data-wk="'+w.key+'">'+label+'</button>';}).join('');nav.querySelectorAll('.kt-week-tab').forEach(function(btn){btn.addEventListener('click',function(){kijktipSelectedWeek=btn.getAttribute('data-wk');renderKijktip();});});setTimeout(function(){var a=nav.querySelector('.kt-week-tab.active');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});},50);}
+function renderKijktipContent(tip){
+  var el=document.getElementById('ktContent');if(!el||!tip)return;
+  el.innerHTML='<div class="t10-loading">Laden...</div>';
+  var type=tip.type==='tv'?'tv':'movie';
+  var p=tip.tmdb_id?tmdb('/'+type+'/'+tip.tmdb_id,{language:'nl-NL'}):tmdb('/search/'+type,{query:tip.titel,language:'nl-NL'}).then(function(r){return(r.results||[])[0]||null;});
+  p.then(function(d){
+    var poster=d&&d.poster_path?TMDB_IMG+d.poster_path:'';
+    var title=tip.titel;var year=d?(d.release_date||d.first_air_date||'').slice(0,4):'';
+    var genres=d&&d.genres?(d.genres||[]).slice(0,3).map(function(g){return '<span class="stag">'+g.name+'</span>';}).join(''):'';
+    var tmdbId=tip.tmdb_id||(d?d.id:null);
+    /* Add detail button to open modal */
+    var detailBtn=tmdbId?'<button class="kt-detail-btn" data-tmdb="'+tmdbId+'" data-mt="'+type+'" data-title="'+title.replace(/"/g,'&quot;')+'">Bekijk details</button>':'';
+    el.innerHTML='<div class="kt-card"><div class="kt-poster">'+(poster?'<img src="'+poster+'" alt="">':'')+'</div><div class="kt-info"><div class="kt-name">'+title+'</div><div class="kt-meta">'+(type==='tv'?'Serie':'Film')+(year?' · '+year:'')+'</div>'+genres+detailBtn+'</div></div><div class="kt-text">'+tip.tekst.replace(/\n/g,'<br>')+'</div>';
+    /* Bind detail button */
+    var btn=el.querySelector('.kt-detail-btn');
+    if(btn)btn.addEventListener('click',function(){openTop10Modal(btn.getAttribute('data-tmdb'),btn.getAttribute('data-mt'),btn.getAttribute('data-title'));});
+  }).catch(function(){el.innerHTML='<div class="kt-card"><div class="kt-info"><div class="kt-name">'+tip.titel+'</div></div></div><div class="kt-text">'+(tip.tekst||'').replace(/\n/g,'<br>')+'</div>';});
+}
+
+/* ══════════════════════════════════════════════════════════
+   SETTINGS (unchanged except version bump)
+   ══════════════════════════════════════════════════════════ */
+function renderSettings(){var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='settings-section';var themeVal=getSetting('theme','system');var pSize=getSetting('posterSize','compact');var notifRel=getSettingBool('notif_releases');var notifFav=getSettingBool('notif_fav');sec.innerHTML='<div class="set-title">Instellingen</div><div class="set-group"><div class="set-group-title">Weergave</div><div class="set-row"><span>Thema</span><div class="set-toggle-group" id="themeToggle"><button class="set-tog'+(themeVal==='light'?' active':'')+'" data-v="light">Licht</button><button class="set-tog'+(themeVal==='dark'?' active':'')+'" data-v="dark">Donker</button><button class="set-tog'+(themeVal==='system'?' active':'')+'" data-v="system">Systeem</button></div></div><div class="set-row set-link" id="setFollowLink"><span>Volgend</span><span class="set-cnt">('+following.length+')</span><span class="set-arrow">&rsaquo;</span></div><div class="set-row set-link" id="setMyListLink"><span>Mijn lijst</span><span class="set-cnt">('+myList.length+')</span><span class="set-arrow">&rsaquo;</span></div><div class="set-row"><span>Posterweergave</span><div class="set-toggle-group" id="posterToggle"><button class="set-tog'+(pSize==='compact'?' active':'')+'" data-v="compact">Compact</button><button class="set-tog'+(pSize==='large'?' active':'')+'" data-v="large">Groot</button></div></div></div><div class="set-group"><div class="set-group-title">Meldingen</div><div class="set-row"><span>Nieuwe releases in volgend</span><label class="set-switch"><input type="checkbox" id="notifRel"'+(notifRel?' checked':'')+'><span class="set-slider"></span></label></div><div class="set-row"><span>Herinner mij aan mijn lijst</span><label class="set-switch"><input type="checkbox" id="notifFav"'+(notifFav?' checked':'')+'><span class="set-slider"></span></label></div></div><div class="set-group"><div class="set-group-title">Juridisch</div><div class="set-row set-link" data-page="privacy"><span>Privacybeleid</span><span class="set-arrow">&rsaquo;</span></div><div class="set-row set-link" data-page="terms"><span>Algemene voorwaarden</span><span class="set-arrow">&rsaquo;</span></div><div class="set-row set-link" data-page="disclaimer"><span>Disclaimer</span><span class="set-arrow">&rsaquo;</span></div><div class="set-row set-link" data-page="deletedata"><span>Data verwijderen</span><span class="set-arrow">&rsaquo;</span></div><div class="set-row set-link" data-page="contact"><span>Contact</span><span class="set-arrow">&rsaquo;</span></div></div><div class="set-group"><div class="set-group-title">Over</div><div class="set-row"><span>Versie</span><span class="set-val">1.2.0</span></div><div class="set-row"><span>Data</span><span class="set-val">TMDB</span></div><div class="set-row set-disclaimer-text">Dit product maakt gebruik van de TMDb-API maar wordt niet goedgekeurd of gecertificeerd door TMDb.</div><div class="set-row set-disclaimer-text">StreamGids is niet gelieerd aan Netflix, Disney+, Amazon, Apple of andere streamingdiensten.</div><div class="set-row set-link" data-page="feedback"><span>App feedback</span><span class="set-arrow">&rsaquo;</span></div></div>';main.appendChild(sec);
+  sec.querySelector('#themeToggle').addEventListener('click',function(e){var btn=e.target.closest('.set-tog');if(!btn)return;var v=btn.getAttribute('data-v');setSetting('theme',v);sec.querySelectorAll('#themeToggle .set-tog').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-v')===v);});if(v==='system'){var dk=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',dk?'dark':'light');localStorage.removeItem('streamgids_theme');}else{document.documentElement.setAttribute('data-theme',v);try{localStorage.setItem('streamgids_theme',v);}catch(e2){}}updateThemeIndicator();updateMetaThemeColor();drawHeaderLogo();});
+  sec.querySelector('#posterToggle').addEventListener('click',function(e){var btn=e.target.closest('.set-tog');if(!btn)return;var v=btn.getAttribute('data-v');setSetting('posterSize',v);posterSize=v;sec.querySelectorAll('#posterToggle .set-tog').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-v')===v);});var appEl=document.querySelector('.app');if(appEl)appEl.classList.toggle('poster-large',v==='large');showToast('Posterweergave: '+(v==='large'?'Groot':'Compact'));});
+  var nrEl=sec.querySelector('#notifRel');if(nrEl)nrEl.addEventListener('change',function(){setSetting('notif_releases',nrEl.checked?'true':'false');if(nrEl.checked&&'Notification' in window&&Notification.permission!=='granted')Notification.requestPermission();});
+  var nfEl=sec.querySelector('#notifFav');if(nfEl)nfEl.addEventListener('change',function(){setSetting('notif_fav',nfEl.checked?'true':'false');});
+  sec.querySelector('#setFollowLink').addEventListener('click',function(){renderFollowing();});
+  sec.querySelector('#setMyListLink').addEventListener('click',function(){renderMyList();});
+  sec.querySelectorAll('.set-link[data-page]').forEach(function(el2){el2.addEventListener('click',function(){renderSettingsPage(el2.getAttribute('data-page'));});});
+}
+function renderFollowing(){var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='settings-section';var html='<div class="set-back" id="setBack">&larr; Instellingen</div><div class="set-title">Volgend</div>';if(!following.length){html+='<div class="kt-empty" style="padding:40px 20px"><div class="kt-empty-title">Geen gevolgde titels</div><div class="kt-empty-sub">Volg films en series via de Volgen knop in de detail-sheet.</div></div>';}else{html+='<div class="fav-list">'+following.map(function(f){var poster=f.img||'';var tl=f._type==='movie'?'Film':'Serie';return '<div class="crow fav-crow" data-id="'+f.id+'"><div class="crow-poster">'+(poster?'<img src="'+poster+'" alt="" loading="lazy">':'')+'</div><div class="crow-info"><div class="crow-title">'+f.title+'</div><div class="crow-meta">'+tl+'</div></div></div>';}).join('')+'</div>';}sec.innerHTML=html;main.appendChild(sec);sec.querySelector('#setBack').addEventListener('click',function(){renderSettings();});sec.querySelectorAll('.fav-crow').forEach(function(row){row.addEventListener('click',function(){openModal(row.getAttribute('data-id'));});});}
+function renderSettingsPage(page){var titles={privacy:'Privacybeleid',terms:'Algemene voorwaarden',disclaimer:'Disclaimer',deletedata:'Data verwijderen',contact:'Contact',feedback:'App feedback'};var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='settings-section';var content='Binnenkort beschikbaar.';if(page==='privacy'){content='<p><strong>Laatst bijgewerkt:</strong> maart 2025</p><p>StreamGids ("de App") is ontwikkeld door Rex Raba. Dit privacybeleid beschrijft hoe wij omgaan met jouw gegevens wanneer je de App gebruikt.</p><h3>1. Welke gegevens verzamelen wij?</h3><p><strong>Lokaal opgeslagen gegevens (op jouw apparaat)</strong><br>De App slaat de volgende gegevens uitsluitend lokaal op via localStorage in je browser of app.</p><h3>2. Externe diensten</h3><p>De App maakt gebruik van TMDb, Google Sheets, football-data.org en Jolpica API.</p><h3>3. Cookies en tracking</h3><p>De App maakt geen gebruik van cookies, advertentie-trackers of analytics-scripts van derden.</p><h3>4. Contact</h3><p><a href="mailto:info@streamgidsapp.nl">info@streamgidsapp.nl</a></p>';}else if(page==='terms'){content='<p><strong>Laatst bijgewerkt:</strong> maart 2025</p><p>Door het gebruik van StreamGids ga je akkoord met deze voorwaarden.</p><h3>1. Algemeen</h3><p>De App is ontwikkeld door Rex Raba.</p><h3>2. Contact</h3><p><a href="mailto:info@streamgidsapp.nl">info@streamgidsapp.nl</a></p>';}else if(page==='disclaimer'){content='<p><strong>Laatst bijgewerkt:</strong> maart 2025</p><h3>Geen officiële affiliatie</h3><p>StreamGids is onafhankelijk.</p><h3>Contact</h3><p><a href="mailto:info@streamgidsapp.nl">info@streamgidsapp.nl</a></p>';}else if(page==='deletedata'){content='<h3>Jouw gegevens</h3><p>StreamGids slaat alle gegevens lokaal op.</p><button class="retry-btn" onclick="localStorage.clear();sessionStorage.clear();showToast(\'Data verwijderd\');setTimeout(function(){location.reload();},500);">Alle data verwijderen</button>';}sec.innerHTML='<div class="set-back" id="setBack">&larr; Instellingen</div><div class="set-title">'+(titles[page]||page)+'</div><div class="set-page-content">'+content+'</div>';main.appendChild(sec);sec.querySelector('#setBack').addEventListener('click',function(){renderSettings();});}
+
+
+/* ── EVENT LISTENERS ── */
+document.addEventListener('DOMContentLoaded',function(){
+  console.log('[StreamGids] Init v1.2.0');
+  loadFollowing();loadMyList();posterSize=getSetting('posterSize','compact');
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(drawHeaderLogo);}else{setTimeout(drawHeaderLogo,150);}
+  var headerSearchBtn=document.getElementById('headerSearchBtn');
+  if(headerSearchBtn)headerSearchBtn.addEventListener('click',function(){haptic('light');setType('search');});
+  var appEl=document.querySelector('.app');
+  if(appEl&&posterSize==='large')appEl.classList.add('poster-large');
+  var brandLink=document.getElementById('brandLink');
+  if(brandLink)brandLink.addEventListener('click',function(e){e.preventDefault();goHome();});
+  document.querySelectorAll('.bnav').forEach(function(btn){btn.addEventListener('click',function(){setType(btn.getAttribute('data-f'));});});
+  var shareBtn=document.getElementById('shareBtn');if(shareBtn)shareBtn.addEventListener('click',shareItem);
+  var followBtn=document.getElementById('followBtn');
+  if(followBtn)followBtn.addEventListener('click',function(){if(!currentModalItem)return;var nowFollowing=toggleFollow(currentModalItem);if(nowFollowing){if('Notification' in window&&Notification.permission!=='granted'&&Notification.permission!=='denied'){if(confirm('Wil jij meldingen ontvangen voor "'+currentModalItem.title+'"?'))Notification.requestPermission();}showToast('Je volgt nu "'+currentModalItem.title+'"');}updateActionBtns();});
+  var myListBtn=document.getElementById('myListBtn');
+  if(myListBtn)myListBtn.addEventListener('click',function(){if(!currentModalItem)return;if(isInMyList(currentModalItem.id)){removeFromMyList(currentModalItem.id);showToast('Verwijderd uit jouw lijst');}else{addToMyList(currentModalItem);showToast('Toegevoegd aan jouw lijst!');}updateActionBtns();});
+  var overlay=document.getElementById('overlay');overlay.addEventListener('click',function(e){if(e.target===overlay)closeModal();});
+  var sheetClose=document.getElementById('sheetClose');if(sheetClose)sheetClose.addEventListener('click',closeModal);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+  document.getElementById('dateTabs').addEventListener('click',function(e){var tab=e.target.closest('.dtab');if(tab)selectDate(tab.getAttribute('data-date'));});
+  document.getElementById('svcBar').addEventListener('click',function(e){var chip=e.target.closest('.sc');if(!chip)return;haptic('light');svcFilter=chip.getAttribute('data-k');document.querySelectorAll('.sc').forEach(function(c){c.classList.toggle('active',c.getAttribute('data-k')===svcFilter);});updateSvcClearFloat();buildFilterChips();renderMain();/* Auto-scroll to active */setTimeout(function(){var a=document.querySelector('.sc.active');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});},50);});
+  document.getElementById('filterBar').addEventListener('click',function(e){var chip=e.target.closest('.filter-chip');if(chip)handleFilterClick(chip.getAttribute('data-sf'));});
+  /* Floating clear filter button */
+  var svcClearBtn=document.getElementById('svcClearFloat');
+  if(svcClearBtn)svcClearBtn.addEventListener('click',function(){haptic('light');svcFilter='all';svcBarVisible=false;document.getElementById('svcBar').style.display='none';document.querySelectorAll('.sc').forEach(function(c){c.classList.toggle('active',c.getAttribute('data-k')==='all');});updateSvcClearFloat();buildFilterChips();renderMain();});
+  document.getElementById('main').addEventListener('click',function(e){
+    var hdr=e.target.closest('.svc-hdr');if(hdr){toggleSection(hdr.getAttribute('data-key'));return;}
+    var row=e.target.closest('.crow');if(row){openModal(row.getAttribute('data-id'));return;}
+    var t10=e.target.closest('.t10-item');if(t10){openTop10Modal(t10.getAttribute('data-tmdb'),t10.getAttribute('data-mt'),t10.getAttribute('data-title'));return;}
+    var t10tab=e.target.closest('.t10-tab');if(t10tab){if(t10tab.getAttribute('data-p'))top10Period=t10tab.getAttribute('data-p');if(t10tab.getAttribute('data-c'))top10Category=t10tab.getAttribute('data-c');renderTop10();return;}
+    var sptab=e.target.closest('.sp-tab');if(sptab){sportFilter=sptab.getAttribute('data-sf');renderSpTabs();if(sportCache)renderSportList(sportCache);}
+  });
+
+  /* Sheet swipe down to dismiss */
+  (function(){var sheet=document.getElementById('sheetEl');if(!sheet)return;var startY=0,currentY=0,isDragging=false;sheet.addEventListener('touchstart',function(e){if(sheet.scrollTop>0)return;startY=e.touches[0].clientY;currentY=startY;isDragging=true;sheet.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',function(e){if(!isDragging)return;currentY=e.touches[0].clientY;var dy=currentY-startY;if(dy<0){dy=0;}if(sheet.scrollTop>0){isDragging=false;sheet.style.transform='';return;}sheet.style.transform='translateY('+dy+'px)';sheet.style.opacity=Math.max(0.3,1-dy/400);},{passive:true});sheet.addEventListener('touchend',function(){if(!isDragging)return;isDragging=false;var dy=currentY-startY;sheet.style.transition='transform 0.25s ease, opacity 0.25s ease';if(dy>100){haptic('medium');sheet.style.transform='translateY(100%)';sheet.style.opacity='0';setTimeout(function(){closeModal();sheet.style.transform='';sheet.style.opacity='';sheet.style.transition='';},250);}else{sheet.style.transform='';sheet.style.opacity='';setTimeout(function(){sheet.style.transition='';},250);}});})();
+
+  /* Horizontal swipe to change days */
+  (function(){var mainEl=document.getElementById('main');if(!mainEl)return;var swStartX=0,swStartY=0,swLocked=false,swDirection=null;var SWIPE_THRESHOLD=50;mainEl.addEventListener('touchstart',function(e){swStartX=e.touches[0].clientX;swStartY=e.touches[0].clientY;swLocked=false;swDirection=null;},{passive:true});mainEl.addEventListener('touchmove',function(e){if(swLocked)return;var dx=e.touches[0].clientX-swStartX;var dy=e.touches[0].clientY-swStartY;if(!swDirection&&(Math.abs(dx)>10||Math.abs(dy)>10)){if(Math.abs(dy)>Math.abs(dx)){swLocked=true;return;}swDirection='horizontal';}},{passive:true});mainEl.addEventListener('touchend',function(e){if(swLocked||swDirection!=='horizontal')return;if(activeTab!=='stream')return;var dx=e.changedTouches[0].clientX-swStartX;if(Math.abs(dx)<SWIPE_THRESHOLD)return;haptic('light');if(dx<0){navigateDay(1);}else{navigateDay(-1);}});})();
+
+  if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){try{var saved=localStorage.getItem('streamgids_theme');if(!saved){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');updateThemeIndicator();updateMetaThemeColor();drawHeaderLogo();}}catch(err){}});}
+  init();
+});
+
+/* ── INIT ── */
+function init(){
+  var lt=document.getElementById('loadText'),ls=document.getElementById('loadSub');
+  if(lt)lt.textContent='Laden...';if(ls)ls.textContent='';
+  var hasRendered=false;
+  function tryRender(){if(!allItems.length)return;if(activeTab!=='stream')return;if(!hasRendered){hasRendered=true;buildSvcBar();buildDateTabs();buildFilterChips();renderMain();}else{buildSvcBar();buildDateTabs();renderMain();}}
+  var t0=Date.now();
+  Promise.all([fetchTMDBProviders().catch(function(){}),fetchGoogleSheet()]).then(function(setup){
+    var gsItems=setup[1]||[];
+    var sheetReady=enrichSheetItems(gsItems).then(function(enriched){allItems=mergeItems([],[],enriched);if(allItems.length){if(ls)ls.textContent='';tryRender();}return enriched;});
+    var tmdbReady=fetchTMDBReleases().catch(function(){return[];});
+    var wmReady=fetchWMSources().then(function(){return fetchWMReleases().catch(function(){return[];});}).catch(function(){return[];});
+    tmdbReady.then(function(tmdbItems){return sheetReady.then(function(gsEnriched){allItems=mergeItems([],tmdbItems,gsEnriched);if(ls)ls.textContent='';tryRender();return gsEnriched;});});
+    Promise.all([wmReady,tmdbReady,sheetReady]).then(function(res){
+      allItems=mergeItems(res[0]||[],res[1]||[],res[2]||[]);
+      console.log('[StreamGids] '+allItems.length+' items geladen in '+(Date.now()-t0)+'ms');
+      if(ls)ls.textContent='';tryRender();
+      enrichMissingPosters();
+      setTimeout(function(){enrichEpisodeDetails().catch(function(){});},500);
+      setTimeout(function(){enrichSheetEpisodeDetails().catch(function(){});},1000);
+      setTimeout(function(){fetchRemainingTMDBPages().catch(function(){});},1500);
+      fetchSportEvents().then(function(evs){var sportItems=sportEventsToItems(evs);sportItems.forEach(function(si){allItems.push(si);});console.log('[StreamGids] '+sportItems.length+' live events geladen');if(activeTab==='stream'){buildSvcBar();buildDateTabs();renderMain();}}).catch(function(){});
+    }).catch(function(e){console.error(e);if(!hasRendered){document.getElementById('main').innerHTML='<div class="error-screen"><div class="error-title">Kon niet laden</div><div class="error-msg">'+(e.message||'Controleer je verbinding.')+'</div><button class="retry-btn" onclick="location.reload()">Opnieuw</button></div>';}});
+  }).catch(function(e){console.error(e);document.getElementById('main').innerHTML='<div class="error-screen"><div class="error-title">Kon niet laden</div><div class="error-msg">'+(e.message||'Controleer je verbinding.')+'</div><button class="retry-btn" onclick="location.reload()">Opnieuw</button></div>';});
+}
