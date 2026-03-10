@@ -32,7 +32,7 @@ function drawHeaderLogo(){
   var ctx=canvas.getContext('2d');
   var dpr=window.devicePixelRatio||2;
   var fontSize=24;
-  var streamFont='700 '+fontSize+'px "Jost", sans-serif';
+  var streamFont='800 '+fontSize+'px "Jost", sans-serif';
   var gidsFont='800 '+fontSize+'px "Jost", sans-serif';
   ctx.font=streamFont;var streamW=ctx.measureText('Stream').width;
   ctx.font=gidsFont;var gW=ctx.measureText('g').width;var giW=ctx.measureText('gi').width;var iW=giW-gW;var gidsW=ctx.measureText('gids').width;var totalW=streamW+gidsW+6;
