@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <title>Streamgids - Ontdek wat er te streamen is.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="StreamGids" />
+  <meta name="theme-color" id="metaThemeColor" content="#f2f2f7" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,700;9..40,800&family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    (function(){try{var s=localStorage.getItem('streamgids_theme');var isDark=false;if(s==='dark')isDark=true;else if(s==='light')isDark=false;else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)isDark=true;document.documentElement.setAttribute('data-theme',isDark?'dark':'light');var m=document.querySelector('#metaThemeColor');if(!m){m=document.createElement('meta');m.id='metaThemeColor';m.name='theme-color';document.head.appendChild(m);}m.content=isDark?'#1a1a1a':'#f2f2f7';}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
+  </script>
+</head>
+<body>
+
+<div class="app">
+  <header class="top-header">
+  <div class="header-row">
+    <a href="#" class="brand-wrap" id="brandLink" style="text-decoration:none">
+      <canvas id="headerLogo" height="28"></canvas>
+      <span class="brand-slogan">ONTDEK WAT ER TE STREAMEN IS</span>
+    </a>
+    <button class="header-search-btn" id="headerSearchBtn" aria-label="Zoeken">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <span class="header-search-label">Zoeken</span>
+    </button>
+  </div>
+  </header>
+  <div class="date-tabs-wrap">
+    <div class="swipe-hint swipe-hint-left" id="swipeHintLeft">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="date-tabs" id="dateTabs"></div>
+    <div class="swipe-hint swipe-hint-right" id="swipeHintRight">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+  <!-- Provider bar: collapsed by default, toggled via filter chip -->
+  <div class="svc-bar" id="svcBar" style="display:none"></div>
+  <div class="filter-bar" id="filterBar">
+    <div class="filter-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+    <div id="filterChips"></div>
+  </div>
+  <!-- Floating clear filter button -->
+  <button class="svc-clear-float" id="svcClearFloat" style="display:none" aria-label="Wis filter">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <span id="svcClearLabel">Alle</span>
+  </button>
+  <main id="main">
+    <div class="loading-screen">
+      <div class="ld-spinner"></div>
+      <div class="ld-text" id="loadText">Laden...</div>
+      <div class="ld-sub" id="loadSub"></div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bnav active" data-f="stream">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    <span>Streamen</span>
+  </button>
+  <button class="bnav" data-f="top10">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span>Top 10</span>
+  </button>
+  <button class="bnav" data-f="kijktip">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    <span>Kijktip</span>
+  </button>
+  <button class="bnav" data-f="mylist">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Mijn lijst</span>
+  </button>
+  <button class="bnav" data-f="settings">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span>Instellingen</span>
+  </button>
+</nav>
+
+<!-- Original bottom sheet (kept for backward compat) -->
+<div id="overlay">
+  <div class="sheet" id="sheetEl">
+    <div class="sheet-top-row">
+      <div class="drag"></div>
+      <button class="sheet-close" id="sheetClose" aria-label="Sluiten">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="si"></div>
+    <div id="sd" class="sheet-body"></div>
+    <div id="ratingsRow" class="ratings-row"></div>
+    <!-- Also available on logos -->
+    <div id="alsoOnRow" class="also-on-row" style="display:none"></div>
+    <a id="wb" class="watch-btn" href="#" target="_blank" rel="noopener noreferrer" style="display:none">
+      <img id="wbLogo" src="" alt="" style="width:22px;height:22px;border-radius:5px;object-fit:cover;display:none" onerror="this.style.display='none'">
+      <span id="wbLabel">Kijken</span>
+    </a>
+    <div class="sheet-action-row">
+      <button id="followBtn" class="action-btn follow-btn">
+        <svg class="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="followBtnLabel">Volgen</span>
+      </button>
+      <button id="myListBtn" class="action-btn mylist-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span id="myListBtnLabel">Mijn lijst</span>
+      </button>
+    </div>
+    <!-- Cast section -->
+    <div id="castRow" class="cast-row" style="display:none"></div>
+    <!-- Similar titles -->
+    <div id="similarRow" class="similar-row" style="display:none"></div>
+    <button id="shareBtn" class="share-btn" style="display:none">Delen</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
