@@ -508,6 +508,10 @@ function renderVoorJou(main){
 
 function renderMain(){
   var main=document.getElementById('main');main.innerHTML='';
+  if(!initComplete&&!allItems.length){
+    main.innerHTML='<div class="loading-screen" id="loadingScreen"><div class="ld-spinner"></div><div id="loadText">Laden...</div><div class="ld-sub" id="loadSub"></div></div>';
+    return;
+  }
   var items=filteredItems().filter(function(i){return i._date===selectedDate;});
   items=items.filter(function(i){return imgCache[i.id]||i.img;});
   items=applySubFilter(items);
