@@ -867,7 +867,7 @@ function renderSpinKijk(){
         '<div class="spin-wheel-wrap"><div class="spin-wheel" id="spinWheel">'+
          '<svg width="160" height="160" viewBox="0 0 24 24" fill="none"><g transform="translate(12 12)"><g><path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/></g><g transform="rotate(45)"><path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/></g><g transform="rotate(90)"><path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/></g><g transform="rotate(135)"><path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/></g><g transform="rotate(180)"><path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/></g><g transform="rotate(225)"><path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/></g><g transform="rotate(270)"><path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/></g><g transform="rotate(315)"><path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/></g></g><circle cx="12" cy="12" r="10" stroke="#1e6f34" stroke-width="0.9"/><circle cx="12" cy="12" r="1.4" fill="#0b401a" stroke="#30af4c" stroke-width="1.5"/></svg>'+
         '</div></div>'+
-        '<button class="spin-go-btn" id="spinGoBtn">Draai!</button>'+
+        '<button class="spin-go-btn" id="spinGoBtn">Spin!</button>'+
       '</div>'+
     '</div>'+
     '<div class="spin-excluded-info" id="spinExInfo"></div>';
