@@ -865,7 +865,51 @@ function renderSpinKijk(){
     '<div class="spin-stage" id="spinStage">'+
       '<div class="spin-idle">'+
         '<div class="spin-wheel-wrap"><div class="spin-wheel" id="spinWheel">'+
-          '<svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>'+
+          '<svg width="120" height="120" viewBox="0 0 24 24" fill="none">
+
+  <g transform="translate(12 12)">
+
+    <g>
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/>
+    </g>
+
+    <g transform="rotate(45)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/>
+    </g>
+
+    <g transform="rotate(90)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/>
+    </g>
+
+    <g transform="rotate(135)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/>
+    </g>
+
+    <g transform="rotate(180)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/>
+    </g>
+
+    <g transform="rotate(225)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/>
+    </g>
+
+    <g transform="rotate(270)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/>
+    </g>
+
+    <g transform="rotate(315)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/>
+    </g>
+
+  </g>
+
+  <!-- outer ring -->
+  <circle cx="12" cy="12" r="10" stroke="#1e6f34" stroke-width="0.9"/>
+  
+  <!-- center hub -->
+  <circle cx="12" cy="12" r="1.4" fill="white" stroke="#30af4c" stroke-width="1.5"/>
+
+</svg>'+
         '</div></div>'+
         '<button class="spin-go-btn" id="spinGoBtn">Draai!</button>'+
       '</div>'+
@@ -938,7 +982,51 @@ function updateSpinStreamerLabel(){
 function doSpin(sec){
   var stage=sec.querySelector('#spinStage');
   stage.innerHTML='<div class="spin-spinning"><div class="spin-wheel-wrap"><div class="spin-wheel spinning" id="spinWheel">'+
-    '<svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>'+
+    '<svg width="120" height="120" viewBox="0 0 24 24" fill="none">
+
+  <g transform="translate(12 12)">
+
+    <g>
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/>
+    </g>
+
+    <g transform="rotate(45)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/>
+    </g>
+
+    <g transform="rotate(90)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/>
+    </g>
+
+    <g transform="rotate(135)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/>
+    </g>
+
+    <g transform="rotate(180)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/>
+    </g>
+
+    <g transform="rotate(225)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/>
+    </g>
+
+    <g transform="rotate(270)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#30af4c"/>
+    </g>
+
+    <g transform="rotate(315)">
+      <path d="M0 0 L0 -10 A10 10 0 0 1 7.07 -7.07 Z" fill="#7fdc9a"/>
+    </g>
+
+  </g>
+
+  <!-- outer ring -->
+  <circle cx="12" cy="12" r="10" stroke="#1e6f34" stroke-width="0.9"/>
+  
+  <!-- center hub -->
+  <circle cx="12" cy="12" r="1.4" fill="white" stroke="#30af4c" stroke-width="1.5"/>
+
+</svg>'+
   '</div></div><div class="spin-spinning-text">Aan het draaien...</div></div>';
   haptic('medium');
 
