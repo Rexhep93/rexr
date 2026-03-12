@@ -759,7 +759,7 @@ function getAvailableSpinStreamers(){
 function renderSpinKijk(){
   var main=document.getElementById('main');main.innerHTML='';
   var sec=document.createElement('section');sec.className='spin-section';
-  sec.innerHTML='<div class="spin-hdr"><div class="spin-title">Spin & Kijk</div><div class="spin-sub">Geen idee wat je vanavond kijkt? <br />Draai het wiel en laat het lot beslissen.🍿🔮</div></div>'+
+  sec.innerHTML='<div class="spin-hdr"><div class="spin-title">Spin & Kijk</div><div class="spin-sub">Geen idee wat je vanavond kijkt? <br />Draai het wiel en laat het lot beslissen.</div></div>'+
     '<div class="spin-filter-row" id="spinFilterRow">'+
       '<button class="spin-filter-btn'+(spinFilter==='all'?' active':'')+'" data-sf="all">Alles</button>'+
       '<button class="spin-filter-btn'+(spinFilter==='movie'?' active':'')+'" data-sf="movie">Films</button>'+
