@@ -182,7 +182,7 @@ var WANTED_PROVIDERS=[
   {match:'cinemember',key:'cinemember',name:'CineMember',color:'#E8003D',text:'#fff'},
   {match:'film1',key:'film1',name:'Film1',color:'#D10000',text:'#fff'}
 ];
-var POPULAR_KEYS=['netflix','prime video','max','disney+','videoland','apple tv+','skyshowtime','viaplay','pathe','npo','paramount','discovery','mubi','cinemember','film1','canal'];
+var POPULAR_KEYS=['netflix','prime video','max','disney+','videoland','skyshowtime','apple tv+','pathe','npo','paramount','discovery','viaplay','cinemember','film1','canal','mubi'];
 var TMDB_NL_PROVIDERS={};
 
 function matchProvider(n){var l=(n||'').toLowerCase().replace(/[^a-z0-9\s]/g,'').trim();if(l==='netflix kids'||l==='netflix basic with ads'||l.indexOf('netflix kids')!==-1)l='netflix';return WANTED_PROVIDERS.find(function(p){return l.includes(p.match);});}
@@ -336,7 +336,7 @@ function buildDateTabs(){
   /* Swipe hint bar (separate element after date tabs) - only show if user hasn't swiped yet */
   var hintBar=document.getElementById('swipeHintBar');
   var hasSeenSwipe=getSetting('swipe_seen','false')==='true';
-  if(!hasSeenSwipe){
+if(!hasSeenSwipe && activeTab==='stream'){
     if(!hintBar){
       hintBar=document.createElement('div');
       hintBar.id='swipeHintBar';
@@ -585,7 +585,7 @@ function setType(f){
   activeTab=f;haptic('light');
   document.querySelectorAll('.bnav').forEach(function(n){n.classList.toggle('active',n.getAttribute('data-f')===f);});
   var dt=document.getElementById('dateTabs');var sb=document.getElementById('svcBar');var fb=document.getElementById('filterBar');var sh=document.getElementById('swipeHintBar');
-  if(f==='stream'){streamType='all';streamSubFilter=null;svcBarVisible=false;dt.style.display='';if(sh)sh.style.display='';sb.style.display='none';fb.style.display='';updateSvcClearFloat();buildFilterChips();buildDateTabs();renderMain();}
+  if(f==='stream'){selectedDate=todayISO();streamType='all';streamSubFilter=null;svcBarVisible=false;dt.style.display='';if(sh)sh.style.display='';sb.style.display='none';fb.style.display='';updateSvcClearFloat();buildFilterChips();buildDateTabs();renderMain();}
   else if(f==='top10'){dt.style.display='none';if(sh)sh.style.display='none';sb.style.display='none';fb.style.display='none';updateSvcClearFloat();renderTop10();}
   else if(f==='kijktip'){dt.style.display='none';if(sh)sh.style.display='none';sb.style.display='none';fb.style.display='none';updateSvcClearFloat();renderKijktip();}
   else if(f==='spinkijk'){dt.style.display='none';if(sh)sh.style.display='none';sb.style.display='none';fb.style.display='none';updateSvcClearFloat();renderSpinKijk();}
@@ -837,8 +837,9 @@ function trueRandom(items){
 }
 
 function getAvailableSpinStreamers(){
+  var spinKeys=['netflix','prime video','max','disney+','videoland','apple tv+','skyshowtime'];
   var streamers=[];
-  POPULAR_KEYS.forEach(function(key){
+  spinKeys.forEach(function(key){
     var wp=WANTED_PROVIDERS.find(function(p){return p.key===key;});
     if(wp)streamers.push({key:wp.key,name:wp.name,color:wp.color,logo:canonicalProviderLogo(wp.key)});
   });
@@ -1200,13 +1201,8 @@ function renderKijktipContent(tip){
     var title=tip.titel;var year=d?(d.release_date||d.first_air_date||'').slice(0,4):'';
     var genres=d&&d.genres?(d.genres||[]).slice(0,3).map(function(g){return '<span class="stag">'+g.name+'</span>';}).join(''):'';
     var tmdbId=tip.tmdb_id||(d?d.id:null);
-    var whyTag='';
-    if(d&&d.genres&&d.genres.length){
-      var genreNames=d.genres.slice(0,2).map(function(g){return g.name;}).join(' · ');
-      whyTag='<div class="kt-why-tag">Waarom deze tip: '+genreNames+'</div>';
-    }
     var detailBtn=tmdbId?'<button class="kt-detail-btn" data-tmdb="'+tmdbId+'" data-mt="'+type+'" data-title="'+title.replace(/"/g,'&quot;')+'">Bekijk details</button>':'';
-    el.innerHTML='<div class="kt-card"><div class="kt-poster">'+(poster?'<img src="'+poster+'" alt="">':'')+'</div><div class="kt-info"><div class="kt-name">'+title+'</div><div class="kt-meta">'+(type==='tv'?'Serie':'Film')+(year?' · '+year:'')+'</div>'+genres+'</div></div>'+whyTag+'<div class="kt-text">'+tip.tekst.replace(/\n/g,'<br>')+'</div>'+detailBtn;
+    el.innerHTML='<div class="kt-card"><div class="kt-poster">'+(poster?'<img src="'+poster+'" alt="">':'')+'</div><div class="kt-info"><div class="kt-name">'+title+'</div><div class="kt-meta">'+(type==='tv'?'Serie':'Film')+(year?' · '+year:'')+'</div>'+genres+'</div></div>'+'<div class="kt-text">'+tip.tekst.replace(/\n/g,'<br>')+'</div>'+detailBtn;
     var btn=el.querySelector('.kt-detail-btn');
     if(btn)btn.addEventListener('click',function(){openTop10Modal(btn.getAttribute('data-tmdb'),btn.getAttribute('data-mt'),btn.getAttribute('data-title'));});
   }).catch(function(){el.innerHTML='<div class="kt-card"><div class="kt-info"><div class="kt-name">'+tip.titel+'</div></div></div><div class="kt-text">'+(tip.tekst||'').replace(/\n/g,'<br>')+'</div>';});
