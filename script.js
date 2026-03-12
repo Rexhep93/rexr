@@ -1042,24 +1042,21 @@ function doSpin(sec){
         var nlFlat=pd&&pd.results&&pd.results.NL&&pd.results.NL.flatrate||[];
         if(!nlFlat.length){tryPick();return;}
 
-        /* Verify streamer filter match */
-        if(hasStreamerFilter){
-          var matchesStreamer=nlFlat.some(function(p){
-            var mp2=matchProvider(p.provider_name);
-            return mp2&&spinSelectedStreamers.indexOf(mp2.key)!==-1;
-          });
-          if(!matchesStreamer){tryPick();return;}
-        }
+      /* Verify streamer filter match — always limit to allowed spin streamers */
+      var SPIN_ALLOWED_KEYS=['netflix','prime video','max','disney+','videoland','apple tv+','skyshowtime'];
+      var activeKeys=hasStreamerFilter?spinSelectedStreamers:SPIN_ALLOWED_KEYS;
+      var matchesStreamer=nlFlat.some(function(p){
+        var mp2=matchProvider(p.provider_name);
+        return mp2&&activeKeys.indexOf(mp2.key)!==-1;
+      });
+      if(!matchesStreamer){tryPick();return;}
 
         /* Find the matching streamer name to display */
         var streamer='';var sColor='var(--green)';
-        if(hasStreamerFilter){
-          /* Prefer showing a streamer that matches the filter */
-          for(var i=0;i<nlFlat.length;i++){
-            var mp2=matchProvider(nlFlat[i].provider_name);
-            if(mp2&&spinSelectedStreamers.indexOf(mp2.key)!==-1){streamer=mp2.name;sColor=mp2.color;break;}
-          }
-        }
+         for(var i=0;i<nlFlat.length;i++){
+        var mp2=matchProvider(nlFlat[i].provider_name);
+        if(mp2&&activeKeys.indexOf(mp2.key)!==-1){streamer=mp2.name;sColor=mp2.color;break;}
+         }
         if(!streamer){
           for(var j=0;j<nlFlat.length;j++){var mp3=matchProvider(nlFlat[j].provider_name);if(mp3){streamer=mp3.name;sColor=mp3.color;break;}}
           if(!streamer&&nlFlat.length>0)streamer=nlFlat[0].provider_name||'';
