@@ -26,11 +26,11 @@ function updateMetaThemeColor(){
 function drawHeaderLogo(){
   const container=document.getElementById('headerLogo');
   if(!container)return;
- 
+
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
   const streamColor=isDark?'#f0f4f8':'#30af4c';
-  const gidsColor=isDark?'#3bc45a':'#808080';
- 
+  const gidsColor=isDark?'#3bc45a':'#2a2a2a';
+
   /* If canvas, replace with a div; if already a div/span, reuse */
   let wrapper=container;
   if(container.tagName==='CANVAS'){
@@ -39,7 +39,7 @@ function drawHeaderLogo(){
     wrapper.style.cssText=container.style.cssText;
     container.parentNode.replaceChild(wrapper,container);
   }
- 
+
   wrapper.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -1051 4672 1444" style="height:2.3em;width:auto;display:block;">
   <g transform="scale(1, -1)">
     <path d="M240 -9Q195 -9 149.5 2.0Q104 13 65 40Q55 47 51.0 56.5Q47 66 48.5 75.5Q50 85 56.5 92.0Q63 99 72.5 100.5Q82 102 94 96Q133 72 169.5 62.5Q206 53 242 53Q299 53 328.0 74.0Q357 95 357 131Q357 159 338.0 175.5Q319 192 278 201L187 221Q124 234 93.5 266.0Q63 298 63 349Q63 394 86.5 426.5Q110 459 153.0 477.0Q196 495 253 495Q297 495 336.5 483.5Q376 472 408 447Q418 440 421.5 430.5Q425 421 422.5 411.5Q420 402 413.0 395.5Q406 389 396.0 388.0Q386 387 375 394Q345 414 314.0 423.5Q283 433 253 433Q197 433 168.0 411.0Q139 389 139 353Q139 325 157.0 307.0Q175 289 213 281L304 262Q369 248 401.5 217.5Q434 187 434 135Q434 69 381.0 30.0Q328 -9 240 -9Z" fill="${streamColor}" transform="translate(0, 0)"/>
@@ -54,7 +54,7 @@ function drawHeaderLogo(){
     <path d="M246 -11Q202 -11 155.5 -3.0Q109 5 71 24Q51 34 42.5 49.5Q34 65 35.0 81.0Q36 97 45.5 110.0Q55 123 70.5 127.5Q86 132 105 124Q146 107 180.0 100.0Q214 93 247 93Q290 93 309.5 106.5Q329 120 329 142Q329 162 316.0 172.0Q303 182 278 186L173 205Q111 216 77.5 250.5Q44 285 44 339Q44 389 72.0 425.5Q100 462 149.5 481.5Q199 501 262 501Q307 501 345.0 493.0Q383 485 418 467Q436 458 443.5 443.0Q451 428 448.5 412.0Q446 396 436.0 383.0Q426 370 410.5 366.0Q395 362 375 370Q343 385 316.0 391.5Q289 398 264 398Q219 398 199.0 383.5Q179 369 179 347Q179 330 190.5 318.5Q202 307 226 303L331 284Q396 273 430.0 240.5Q464 208 464 152Q464 76 404.5 32.5Q345 -11 246 -11Z" fill="${gidsColor}" transform="translate(4150, 0)"/>
   </g>
 </svg>`;
- 
+
   updateMetaThemeColor();
 }
 
