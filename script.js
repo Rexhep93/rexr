@@ -1242,7 +1242,7 @@ function init(){
     var gsItems=setup[1]||[];
     allItems=mergeItems([],gsItems);if(allItems.length){if(ls)ls.textContent='';tryRender();}var sheetReady=enrichSheetItems(gsItems).then(function(enriched){allItems=mergeItems(allItems.filter(function(i){return i._source!=='googlesheet';}),enriched);if(activeTab==='stream'){buildSvcBar();buildDateTabs();renderMain();}return enriched;});
     var tmdbReady=fetchTMDBReleases().catch(function(){return[];});
-    tmdbReady.then(function(tmdbItems){return sheetReady.then(function(gsEnriched){allItems=mergeItems(tmdbItems,gsEnriched);if(ls)ls.textContent='';tryRender();return gsEnriched;});});
+    tmdbReady.then(function(tmdbItems){allItems=mergeItems(tmdbItems,gsItems);if(ls)ls.textContent='';tryRender();return sheetReady.then(function(gsEnriched){allItems=mergeItems(tmdbItems,gsEnriched);if(activeTab==='stream'){buildSvcBar();buildDateTabs();renderMain();}});});
     Promise.all([tmdbReady,sheetReady]).then(function(res){
       allItems=mergeItems(res[0]||[],res[1]||[]);
       initComplete=true;
