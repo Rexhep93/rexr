@@ -110,6 +110,7 @@ var allDays=[];var selectedDate=null;var currentModalItem=null;var collapsedSect
 var activeTab='stream';
 var streamType='all';var streamSubFilter=null;
 var svcBarVisible=false;
+var forYouDismissed=false;
 var initComplete=false; /* Track whether init has finished loading */
 
 /* ── Following & My List ── */
@@ -396,16 +397,17 @@ function enrichSavedGenres(){
 }
 
 function renderVoorJou(main){
+  if(forYouDismissed)return;
   var items=getVoorJouItems();
   if(!items.length)return;
   var sec=document.createElement('div');sec.className='voor-jou-section';
-  sec.innerHTML='<div class="vj-title">Voor jou</div><div class="vj-sub">Gebaseerd op je lijst en gevolgde titels</div><div class="vj-scroll">'+items.map(function(item){
+  sec.innerHTML='<div class="vj-header"><div><div class="vj-title">Voor jou</div><div class="vj-sub">Gebaseerd op je lijst en gevolgde titels</div></div><button class="vj-dismiss" aria-label="Sluiten">✕</button></div><div class="vj-scroll">'+items.map(function(item){
     var poster=imgCache[item.id]||item.img||'';
     var title=(item.title||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');
     var sid=String(item.id).replace(/['"\\]/g,'');
     return '<div class="vj-item" data-id="'+sid+'">'+(poster?'<img class="vj-poster" src="'+poster+'" alt="'+title+'" loading="lazy">':'<div class="vj-poster"></div>')+'<div class="vj-name">'+title+'</div><div class="vj-meta">'+(item._type==='movie'?'Film':'Serie')+'</div></div>';
   }).join('')+'</div>';
-  main.insertBefore(sec,main.firstChild);
+  main.insertBefore(sec,main.firstChild); sec.querySelector('.vj-dismiss').addEventListener('click',function(){forYouDismissed=true;sec.remove();});
   /* Prevent horizontal scroll in vj-scroll from triggering day swipe */
   var vjScroll=sec.querySelector('.vj-scroll');
   if(vjScroll){
