@@ -715,7 +715,7 @@ body {
 .vj-name { font-size: 12px; font-weight: 600; color: var(--t1); margin-top: 6px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vj-meta { font-size: 10px; color: var(--t3); }
 .vj-header { display:flex; justify-content:space-between; align-items:flex-start; padding: 0 16px; }
-.vj-dismiss { background:none; border:none; font-size:16px; color:var(--t3); cursor:pointer; padding:4px 0 0 12px; line-height:1; }
+.vj-dismiss {background:none;border:none;font-size: 22px;color:var(--t3);cursor:pointer;padding:4px 0 0 12px;line-height:1;}
 
 /* ── Kijktip ── */
 .kijktip-section { margin: 12px; background: var(--card); border: 1px solid var(--brd); border-radius: 14px; padding: 18px 16px; animation: fadeUp 0.3s ease both; }
@@ -775,7 +775,7 @@ body {
 .fav-list { display: flex; flex-direction: column; }
 .fav-crow { border-bottom: 1px solid var(--brd2); }
 .fav-crow:last-child { border-bottom: none; }
-.mylist-remove-btn { background: none; border: none; color: var(--t3); font-size: 18px; cursor: pointer; padding: 6px 8px; flex-shrink: 0; border-radius: var(--radius); transition: all 0.12s; }
+.mylist-remove-btn {background: none;border: none;color: var(--t3);font-size: 22px;cursor: pointer;padding: 8px 10px;flex-shrink: 0;border-radius: var(--radius);transition: all 0.12s;}
 .mylist-remove-btn:active { background: var(--brd2); color: var(--red); }
 .filter-chip.back-chip { padding: 6px 10px; font-size: 14px; font-weight: 700; min-width: 32px; text-align: center; }
 
