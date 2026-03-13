@@ -621,7 +621,7 @@ function enrichMyListDates(callback){
          if(last&&last.air_date){
         item._date=last.air_date;
         item._lastEp='S'+String(last.season_number).padStart(2,'0')+'E'+String(last.episode_number).padStart(2,'0');
-   }}
+   }
         if(nxt&&nxt.air_date){
           item._nextDate=nxt.air_date;
           item._nextEp='S'+String(nxt.season_number).padStart(2,'0')+'E'+String(nxt.episode_number).padStart(2,'0');
