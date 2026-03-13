@@ -609,30 +609,25 @@ function closeModal(){haptic('light');document.getElementById('overlay').classLi
 function renderMyListItem(f,mode,extraClass){var poster=f.img||'';var tl=f._type==='movie'?'Film':'Serie';var sn=capitalizeProvider(f._src&&f._src.name||'');var epLabel='';if(f._type==='tv'){if(mode==='next'&&f._nextEp){epLabel=' · '+f._nextEp;}else if(f._lastEp){epLabel=' · t/m '+f._lastEp;}}return '<div class="crow fav-crow'+(extraClass?' '+extraClass:'')+'" data-id="'+f.id+'"><div class="crow-poster">'+(poster?'<img src="'+poster+'" alt="" loading="lazy">':'<div class="crow-fb">'+f.title+'</div>')+'</div><div class="crow-info"><div class="crow-title">'+f.title+'</div><div class="crow-meta">'+tl+(sn?' · '+sn:'')+epLabel+'</div></div><button class="mylist-remove-btn" data-id="'+f.id+'" aria-label="Verwijder">✕</button></div>';}
 function enrichMyListDates(callback){
   var tvItems=myList.filter(function(f){return f._type==='tv'&&f.tmdb_id;});
-  if(!tvItems.length){callback();return;}
-  var idx=0;
-  function next(){
-    if(idx>=tvItems.length){callback();return;}
-    var batch=tvItems.slice(idx,idx+5);idx+=5;
-    Promise.all(batch.map(function(item){
-      return tmdb('/tv/'+item.tmdb_id,{language:'nl-NL'}).then(function(d){
-        var nxt=d.next_episode_to_air;
-        var last=d.last_episode_to_air;
-         if(last&&last.air_date){
-        item._date=last.air_date;
-        item._lastEp='S'+String(last.season_number).padStart(2,'0')+'E'+String(last.episode_number).padStart(2,'0');
-   }
-        if(nxt&&nxt.air_date){
-          item._nextDate=nxt.air_date;
-          item._nextEp='S'+String(nxt.season_number).padStart(2,'0')+'E'+String(nxt.episode_number).padStart(2,'0');
-        } else {
-          item._nextDate=null;
-          item._nextEp=null;
-        }
-      }).catch(function(){});
-    })).then(next);
+   if(!tvItems.length){callback();return;}
+   var today=todayISO();
+   tvItems.forEach(function(item){
+     var liveItem=allItems.find(function(i){return String(i.tmdb_id)===String(item.tmdb_id)&&i._type==='tv';});
+     if(liveItem&&liveItem._date){
+       if(liveItem._date>today){
+         item._nextDate=liveItem._date;
+         item._nextEp=liveItem._epInfo?'S'+String(liveItem._epInfo.s).padStart(2,'0')+'E'+String(liveItem._epInfo.e).padStart(2,'0'):null;
+         item._date=today;
+         item._lastEp=null;
+       } else {
+         item._date=liveItem._date;
+         item._lastEp=liveItem._epInfo?'S'+String(liveItem._epInfo.s).padStart(2,'0')+'E'+String(liveItem._epInfo.e).padStart(2,'0'):null;
+         item._nextDate=null;
+         item._nextEp=null;
+    }
   }
-  next();
+});
+callback();
 }
 function renderMyList(){document.querySelectorAll('.bnav').forEach(function(n){n.classList.toggle('active',n.getAttribute('data-f')==='mylist');});var dt=document.getElementById('dateTabs');var sb=document.getElementById('svcBar');var fb=document.getElementById('filterBar');if(dt)dt.style.display='none';if(sb)sb.style.display='none';if(fb)fb.style.display='none';var main=document.getElementById('main');main.innerHTML='<div class="loading-screen"><div class="ld-spinner"></div></div>';enrichMyListDates(function(){main.innerHTML='';var sec=document.createElement('section');sec.className='settings-section';var html='<div class="set-title">Mijn lijst</div>';if(!myList.length){html+='<div class="kt-empty" style="padding:40px 20px"><div class="kt-empty-title">Lijst is leeg</div><div class="kt-empty-sub">Voeg toe via het + knopje bij de film of serie.</div></div>';}else{var today=todayISO();var nowItems=[];var futureGroups={};myList.forEach(function(f){var d=f._date||'';if(!d||d<=today){nowItems.push(f);if(f._nextDate&&f._nextDate>today){if(!futureGroups[f._nextDate])futureGroups[f._nextDate]=[];futureGroups[f._nextDate].push(f);}}else{if(!futureGroups[d])futureGroups[d]=[];futureGroups[d].push(f);}});var futureDates=Object.keys(futureGroups).sort();html+='<div class="fav-list">';if(nowItems.length){html+='<div class="mylist-group-label now">Nu te zien</div>';html+=nowItems.map(function(f){return renderMyListItem(f,'now','now-item');}).join('');}futureDates.forEach(function(d){html+='<div class="mylist-group-label">Vanaf '+fullDate(d)+' te zien</div>';html+=futureGroups[d].map(function(f){return renderMyListItem(f,'next');}).join('');});html+='</div>';}sec.innerHTML=html;main.appendChild(sec);sec.querySelectorAll('.fav-crow').forEach(function(row){row.addEventListener('click',function(e){if(e.target.closest('.mylist-remove-btn'))return;openModal(row.getAttribute('data-id'));});});sec.querySelectorAll('.mylist-remove-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();removeFromMyList(btn.getAttribute('data-id'));renderMyList();showToast('Verwijderd uit lijst');});});});}
 
