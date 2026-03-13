@@ -1240,7 +1240,7 @@ function init(){
   var t0=Date.now();
   Promise.all([fetchTMDBProviders().catch(function(){}),fetchGoogleSheet()]).then(function(setup){
     var gsItems=setup[1]||[];
-    var sheetReady=enrichSheetItems(gsItems).then(function(enriched){allItems=mergeItems([],enriched);if(allItems.length){if(ls)ls.textContent='';tryRender();}return enriched;});
+    allItems=mergeItems([],gsItems);if(allItems.length){if(ls)ls.textContent='';tryRender();}var sheetReady=enrichSheetItems(gsItems).then(function(enriched){allItems=mergeItems(allItems.filter(function(i){return i._source!=='googlesheet';}),enriched);if(activeTab==='stream'){buildSvcBar();buildDateTabs();renderMain();}return enriched;});
     var tmdbReady=fetchTMDBReleases().catch(function(){return[];});
     tmdbReady.then(function(tmdbItems){return sheetReady.then(function(gsEnriched){allItems=mergeItems(tmdbItems,gsEnriched);if(ls)ls.textContent='';tryRender();return gsEnriched;});});
     Promise.all([tmdbReady,sheetReady]).then(function(res){
