@@ -56,6 +56,13 @@ body {
   z-index: 2;
 }
 
+#main {
+  transition: opacity 0.18s ease;
+}
+#main.day-fade {
+  opacity: 0;
+}
+
 .top-header {
   display: flex;
   flex-direction: column;
