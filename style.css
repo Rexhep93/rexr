@@ -705,6 +705,8 @@ body {
 .vj-poster { width: 100px; height: 150px; border-radius: 10px; object-fit: cover; background: var(--brd2); display: block; }
 .vj-name { font-size: 12px; font-weight: 600; color: var(--t1); margin-top: 6px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vj-meta { font-size: 10px; color: var(--t3); }
+.vj-header { display:flex; justify-content:space-between; align-items:flex-start; padding: 0 16px; }
+.vj-dismiss { background:none; border:none; font-size:16px; color:var(--t3); cursor:pointer; padding:4px 0 0 12px; line-height:1; }
 
 /* ── Kijktip ── */
 .kijktip-section { margin: 12px; background: var(--card); border: 1px solid var(--brd); border-radius: 14px; padding: 18px 16px; animation: fadeUp 0.3s ease both; }
