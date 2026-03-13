@@ -58,6 +58,7 @@ body {
 
 #main {
   transition: opacity 0.18s ease;
+  min-height: calc(100vh - 200px);
 }
 #main.day-fade {
   opacity: 0;
