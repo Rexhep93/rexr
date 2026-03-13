@@ -132,7 +132,7 @@ function addToMyList(item){
   var titleLower=(item.title||'').toLowerCase();
   var exists=myList.some(function(f){if(f.id===item.id)return true;if(f.title&&f.title.toLowerCase()===titleLower&&f._type===item._type)return true;return false;});
   if(exists)return false;
-  myList.push({id:item.id,title:item.title,img:item.img||imgCache[item.id]||'',_type:item._type,_key:item._key,_src:item._src,tmdb_id:item.tmdb_id||null,_genres:item._genres||[]});
+  myList.push({id:item.id, title:item.title, img:..., _type:..., _key:..., _src:..., tmdb_id:..., _genres:..., _date: item._date || ''});
   saveMyList();updateMyListBadge();return true;
 }
 function removeFromMyList(id){haptic('light');var idx=myList.findIndex(function(f){return f.id===id;});if(idx>=0){myList.splice(idx,1);saveMyList();updateMyListBadge();return true;}return false;}
@@ -605,6 +605,41 @@ function closeModal(){haptic('light');document.getElementById('overlay').classLi
 
 /* ── MY LIST ── */
 function renderMyList(){document.querySelectorAll('.bnav').forEach(function(n){n.classList.toggle('active',n.getAttribute('data-f')==='mylist');});var dt=document.getElementById('dateTabs');var sb=document.getElementById('svcBar');var fb=document.getElementById('filterBar');if(dt)dt.style.display='none';if(sb)sb.style.display='none';if(fb)fb.style.display='none';var main=document.getElementById('main');main.innerHTML='';var sec=document.createElement('section');sec.className='settings-section';var html='<div class="set-title">Mijn lijst</div>';if(!myList.length){html+='<div class="kt-empty" style="padding:40px 20px"><div class="kt-empty-title">Lijst is leeg</div><div class="kt-empty-sub">Voeg toe via het + knopje bij de film of serie.</div></div>';}else{html+='<div class="fav-list">'+myList.map(function(f){var poster=f.img||'';var tl=f._type==='movie'?'Film':'Serie';var sn=capitalizeProvider(f._src&&f._src.name||'');return '<div class="crow fav-crow" data-id="'+f.id+'"><div class="crow-poster">'+(poster?'<img src="'+poster+'" alt="" loading="lazy">':'<div class="crow-fb">'+f.title+'</div>')+'</div><div class="crow-info"><div class="crow-title">'+f.title+'</div><div class="crow-meta">'+tl+(sn?' · '+sn:'')+'</div></div><button class="mylist-remove-btn" data-id="'+f.id+'" aria-label="Verwijder">✕</button></div>';}).join('')+'</div>';}sec.innerHTML=html;main.appendChild(sec);sec.querySelectorAll('.fav-crow').forEach(function(row){row.addEventListener('click',function(e){if(e.target.closest('.mylist-remove-btn'))return;openModal(row.getAttribute('data-id'));});});sec.querySelectorAll('.mylist-remove-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();removeFromMyList(btn.getAttribute('data-id'));renderMyList();showToast('Verwijderd uit lijst');});});}
+  
+var today = todayISO(); // bijv. "2025-03-13"
+
+  // Groepeer items
+  var nowItems = [];      // _date <= today of leeg
+  var futureGroups = {};  // datum -> [items]
+
+  myList.forEach(function(f) {
+    var d = f._date || '';
+    if (!d || d <= today) {
+      nowItems.push(f);
+    } else {
+      if (!futureGroups[d]) futureGroups[d] = [];
+      futureGroups[d].push(f);
+    }
+  });
+
+  // Sorteer toekomstige data
+  var futureDates = Object.keys(futureGroups).sort();
+
+  // Bouw HTML
+  // Sectie 1: "Nu te zien"
+  if (nowItems.length) {
+    html += '<div class="mylist-group-label">Nu te zien</div>';
+    // render nowItems ...
+  }
+
+  // Secties 2+: "Vanaf [datum] te zien"
+  futureDates.forEach(function(d) {
+    var label = fullDate(d); // "15 maart 2025"
+    html += '<div class="mylist-group-label">Vanaf ' + label + ' te zien</div>';
+    // render futureGroups[d] items ...
+  });
+}
+
 
 /* ── TOP 10 ── */
 var top10Period='week',top10Category='all',top10Cache={};
