@@ -253,7 +253,7 @@ body {
   display: flex;
   overflow-x: auto;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 14px 14px 0px 14px;
   background: var(--bg);
   -webkit-overflow-scrolling: touch;
   align-items: center;
