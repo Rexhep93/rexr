@@ -490,6 +490,15 @@ body {
   font-family: var(--font); line-height: 1;
 }
 
+.mylist-group-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t2);
+  padding: 14px 16px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* ── Modal / Sheet ── */
 #overlay {
   position: fixed; inset: 0;
