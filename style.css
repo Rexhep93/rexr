@@ -89,7 +89,7 @@ body {
 .brand-wrap:active { opacity: 0.7; }
 #headerLogo {
   display: block;
-  height: 37px;
+  height: 38px;
 }
 .brand-slogan {
   font-family: var(--font);
