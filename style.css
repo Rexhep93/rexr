@@ -744,7 +744,7 @@ body {
 
 /* ── Settings ── */
 .settings-section { margin: 12px; animation: fadeUp 0.3s ease both; }
-.set-title { font-size: 22px; font-weight: 800; margin-bottom: 16px; padding: 0 4px; }
+.set-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; padding: 0 4px; }
 .set-group { background: var(--card); border: 1px solid var(--brd); border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
 .set-group-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t3); padding: 14px 16px 6px; }
 .set-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-top: 1px solid var(--brd2); gap: 12px; font-size: 15px; color: var(--t1); }
