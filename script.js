@@ -610,7 +610,7 @@ function renderMyListItem(f,mode,extraClass){
   var poster=f.img||'';
   var isMovie=f._type==='movie';
   /* ── Type badge (right side) ── */
-  var typeBadge=isMovie?''<div class="ml-badge film">Film</div>'':''<div class="ml-badge serie">Serie</div>'';
+  var typeBadge=isMovie?'<div class="ml-badge film">Film</div>':'<div class="ml-badge serie">Serie</div>';
   /* ── Provider logo label ── */
   var provLogo=canonicalProviderLogo(f._key||'');
   var sn=capitalizeProvider(f._src&&f._src.name||'');
