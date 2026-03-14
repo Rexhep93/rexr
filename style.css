@@ -851,6 +851,6 @@ body {
   margin-top: 3px; margin-right: 4px;
 }
 
-.ml-ep-badge.season { width: fit-content; background: rgba(100,149,237,0.12); color: #6495ed; }
+.ml-ep-badge.season { display: inline-block; width: fit-content; background: rgba(100,149,237,0.12); color: #6495ed; }
 
 
