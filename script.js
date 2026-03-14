@@ -610,7 +610,7 @@ function renderMyListItem(f,mode,extraClass){
   var poster=f.img||'';
   var isMovie=f._type==='movie';
   /* ── Type badge (right side) ── */
-  var typeBadge=isMovie?'<div class="crow-badge film">Film</div>':'<div class="crow-badge serie">Serie</div>';
+  var typeBadge=isMovie?''<div class="ml-badge film">Film</div>'':''<div class="ml-badge serie">Serie</div>'';
   /* ── Provider logo label ── */
   var provLogo=canonicalProviderLogo(f._key||'');
   var sn=capitalizeProvider(f._src&&f._src.name||'');
@@ -629,16 +629,16 @@ function renderMyListItem(f,mode,extraClass){
     if(epSrc){
       var snNext=epSrc.match(/S(\d+)/i);
       var enNext=epSrc.match(/E(\d+)/i);
-      var seasonBadgeNext=snNext?'<span class="crow-ep-badge season">Seizoen '+Number(snNext[1])+'</span>':'';
-      var epBadgeNext=enNext?'<span class="crow-ep-badge">Aflevering '+Number(enNext[1])+'</span>':'';
+      var seasonBadgeNext=snNext?'<span class="ml-ep-badge season">Seizoen '+Number(snNext[1])+'</span>':'';
+      var epBadgeNext=enNext?'<span class="ml-ep-badge">Aflevering '+Number(enNext[1])+'</span>':'';
       epBadgesHtml=seasonBadgeNext+epBadgeNext;
     } else if(f._fullSeason){
-      epBadgesHtml='<span class="crow-ep-badge season">Volledig seizoen (S'+String(f._fullSeason).padStart(2,'0')+')</span>';
+      epBadgesHtml='<span class="ml-ep-badge season">Volledig seizoen (S'+String(f._fullSeason).padStart(2,'0')+')</span>';
     } else if(f._lastEp){
       var seasonNum=f._lastEp.match(/S(\d+)/i);
       var epNum=f._lastEp.match(/E(\d+)/i);
-      var seasonBadge=seasonNum?'<span class="crow-ep-badge season">Seizoen '+Number(seasonNum[1])+'</span>':'';
-      var epBadge=epNum?'<span class="crow-ep-badge">t/m aflevering '+Number(epNum[1])+'</span>':'';
+      var seasonBadge=seasonNum?'<span class="ml-ep-badge season">Seizoen '+Number(seasonNum[1])+'</span>':'';
+      var epBadge=epNum?'<span class="ml-ep-badge">t/m aflevering '+Number(epNum[1])+'</span>':'';
       epBadgesHtml=seasonBadge+epBadge;
     }
   }
