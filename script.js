@@ -367,6 +367,7 @@ function getVoorJouItems(){
   var candidates=allItems.filter(function(i){
     if(!i.img&&!imgCache[i.id])return false;
     if(savedTitles[(i.title||'').toLowerCase()])return false;
+    if((i._genres||[]).indexOf(16)!==-1)return false;
     if(!i._genres||!i._genres.length)return false;
     return i._genres.some(function(g){return topGenres.indexOf(g)!==-1;});
   });
